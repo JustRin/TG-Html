@@ -1,146 +1,591 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добавление нового тайтла</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Убираем отступы по краям экрана */
+        html,
+        body * {
+            box-sizing: border-box;
+            font-family: 'Open Sans', sans-serif;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
+            background:
+                linear-gradient(rgba(246, 247, 249, 0.8),
+                    rgba(246, 247, 249, 0.8)),
+                url(https://dl.dropboxusercontent.com/u/22006283/preview/codepen/sky-clouds-cloudy-mountain.jpg) no-repeat center center fixed;
+            background-size: cover;
         }
 
-        /* Шапка */
-        .mobile-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0; /* Убираем внутренние отступы */
-            color: white;
-            font-family: Arial, sans-serif;
+        .frame {
+            background:
+                linear-gradient(rgba(35, 43, 85, 0.75),
+                    rgba(35, 43, 85, 0.95)),
+                url(https://dl.dropboxusercontent.com/u/22006283/preview/codepen/clouds-cloudy-forest-mountain.jpg) no-repeat center center;
+            border-radius: 5px;
+            box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            transition: all .5s ease;
         }
 
-        /* Кнопки */
-        .header-buttons {
-            display: flex;
-            width: 100%; /* Растягиваем кнопки на всю ширину */
+        .frame-long {
+            height: 615px;
         }
 
-        .header-btn-left {
-            flex: 1; /* Кнопки равномерно занимают все пространство */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 0; /* Увеличиваем отступ сверху и снизу */
-            background-image: linear-gradient(to right, #9EEFE1 0%, #4830F0 51%, #9EEFE1 100%);
-            background-size: 200% auto;
-            box-shadow: 0 0 20px rgba(0, 0, 0, .1);
-            color: white;
-            font-size: 1em;
-            font-weight: 500;
-            border: none;
+        .frame-short {
+            height: 400px;
+            margin-top: 50px;
+            box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav {
+            width: 100%;
+            height: 100px;
+            padding-top: 40px;
+            opacity: 1;
+            transition: all .5s ease;
+        }
+
+        .nav-up {
+            transform: translateY(-100px);
+            opacity: 0;
+        }
+
+        li {
+            padding-left: 10px;
+            font-size: 18px;
+            display: inline;
+            text-align: left;
+            text-transform: uppercase;
+            padding-right: 10px;
+            color: #ffffff;
+        }
+
+        .signin-active a {
+            padding-bottom: 10px;
+            color: #ffffff;
+            text-decoration: none;
+            border-bottom: solid 2px #1059FF;
+            transition: all .25s ease;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-right: 1px;
-            margin-left: 1px;
         }
-        
-        .header-btn-right {
-            flex: 1; /* Кнопки равномерно занимают все пространство */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px 0; /* Увеличиваем отступ сверху и снизу */
-            background-image: linear-gradient(to left, #9EEFE1 0%, #4830F0 51%, #9EEFE1 100%);
-            background-size: 200% auto;
-            box-shadow: 0 0 20px rgba(0, 0, 0, .1);
-            color: white;
-            font-size: 1em;
-            font-weight: 500;
-            border: none;
+
+        .signin-inactive a {
+            padding-bottom: 0;
+            color: rgba(255, 255, 255, .3);
+            text-decoration: none;
+            border-bottom: none;
             cursor: pointer;
-            transition: all 0.3s ease;
-            margin-right: 1px;
-            margin-left: 1px;
         }
 
-        /* Скругляем только нужные углы */
-        .header-btn:first-child {
-            border-radius: 0 0 0 8px; /* Левый нижний угол у первой кнопки */
-        }
-        .header-btn:last-child {
-            border-radius: 0 0 8px 0; /* Правый нижний угол у второй кнопки */
-        }
-
-        .header-btn i {
-            margin-right: 5px;
+        .signup-active a {
+            cursor: pointer;
+            color: #ffffff;
+            text-decoration: none;
+            border-bottom: solid 2px #1059FF;
+            padding-bottom: 10px;
         }
 
-        .header-btn:hover {
-            background-color: #e8f4ff;
-            color: #3a7bcf;
+        .signup-inactive a {
+            cursor: pointer;
+            color: rgba(255, 255, 255, .3);
+            text-decoration: none;
+            transition: all .25s ease;
+        }
+
+        .form-signin {
+            
+            padding-left: 37px;
+            padding-right: 37px;
+            padding-top: 155px;
+            transition: opacity .5s ease, transform .5s ease;
+        }
+
+        .form-signin-left {
+            transform: translateX(-400px);
+            opacity: .0;
+        }
+
+        .form-signup {
+            padding-left: 37px;
+            padding-right: 37px;
+            padding-top: 155px;
+            position: relative;
+            top: -470px;
+            left: 400px;
+            opacity: 0;
+            transition: all .5s ease;
+        }
+
+        .form-signup-left {
+            transform: translateX(-399px);
+            opacity: 1;
+        }
+
+        .form-signup-down {
+            top: 0px;
+            opacity: 0;
+        }
+
+        .success {
+            width: 80%;
+            height: 150px;
+            text-align: center;
+            position: relative;
+            top: -890px;
+            left: 450px;
+            opacity: .0;
+            transition: all .8s .4s ease;
+        }
+
+        .success-left {
+            transform: translateX(-406px);
+            opacity: 1;
+        }
+
+        .successtext {
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 300;
+            margin-top: -35px;
+            padding-left: 37px;
+            padding-right: 37px;
+        }
+
+        #check path {
+            stroke: #ffffff;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            stroke-width: .85px;
+            stroke-dasharray: 60px 300px;
+            stroke-dashoffset: -166px;
+            fill: rgba(255, 255, 255, .0);
+            transition: stroke-dashoffset 2s ease .5s, fill 1.5s ease 1.0s;
+        }
+
+        #check.checked path {
+            stroke-dashoffset: 33px;
+            fill: rgba(255, 255, 255, .03);
+        }
+
+        .form-signin input,
+        .form-signup input {
+            color: #ffffff;
+            font-size: 13px;
+        }
+
+        .form-styling {
+            width: 100%;
+            height: 35px;
+            padding-left: 15px;
+            border: none;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, .2);
+        }
+
+        label {
+            font-weight: 400;
+            text-transform: uppercase;
+            font-size: 13px;
+            padding-left: 15px;
+            padding-bottom: 10px;
+            color: rgba(255, 255, 255, .7);
+            display: block;
+        }
+
+        :focus {
+            outline: none;
+        }
+
+        .form-signin input:focus,
+        textarea:focus,
+        .form-signup input:focus,
+        textarea:focus {
+            background: rgba(255, 255, 255, .3);
+            border: none;
+            padding-right: 40px;
+            transition: background .5s ease;
+        }
+
+        [type="checkbox"]:not(:checked),
+        [type="checkbox"]:checked {
+            position: absolute;
+            display: none;
+        }
+
+        [type="checkbox"]:not(:checked)+label,
+        [type="checkbox"]:checked+label {
+            position: relative;
+            padding-left: 85px;
+            padding-top: 2px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        [type="checkbox"]:not(:checked)+label:before,
+        [type="checkbox"]:checked+label:before,
+        [type="checkbox"]:not(:checked)+label:after,
+        [type="checkbox"]:checked+label:after {
+            content: '';
+            position: absolute;
+        }
+
+        [type="checkbox"]:not(:checked)+label:before,
+        [type="checkbox"]:checked+label:before {
+            width: 65px;
+            height: 30px;
+            background: rgba(255, 255, 255, .2);
+            border-radius: 15px;
+            left: 0;
+            top: -3px;
+            transition: all .2s ease;
+        }
+
+        [type="checkbox"]:not(:checked)+label:after,
+        [type="checkbox"]:checked+label:after {
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, .7);
+            border-radius: 50%;
+            top: 7px;
+            left: 10px;
+            transition: all .2s ease;
+        }
+
+        /* on checked */
+        [type="checkbox"]:checked+label:before {
+            background: #0F4FE6;
+        }
+
+        [type="checkbox"]:checked+label:after {
+            background: #ffffff;
+            top: 7px;
+            left: 45px;
+        }
+
+        [type="checkbox"]:checked+label .ui,
+        [type="checkbox"]:not(:checked)+label .ui:before,
+        [type="checkbox"]:checked+label .ui:after {
+            position: absolute;
+            left: 6px;
+            width: 65px;
+            border-radius: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            line-height: 22px;
+            transition: all .2s ease;
+        }
+
+        [type="checkbox"]:not(:checked)+label .ui:before {
+            content: "no";
+            left: 32px;
+            color: rgba(255, 255, 255, .7);
+        }
+
+        [type="checkbox"]:checked+label .ui:after {
+            content: "yes";
+            color: #ffffff;
+        }
+
+        [type="checkbox"]:focus+label:before {
+            box-sizing: border-box;
+            margin-top: -1px;
+        }
+
+        .btn-signup {
+            float: left;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 13px;
+            text-align: center;
+            color: #ffffff;
+            padding-top: 8px;
+            width: 100%;
+            height: 35px;
+            border: none;
+            border-radius: 20px;
+            margin-top: 23px;
+            background-color: #1059FF;
+        }
+
+        .btn-signin {
+            float: left;
+            padding-top: 8px;
+            width: 100%;
+            height: 35px;
+            border: none;
+            border-radius: 20px;
+            margin-top: -8px;
+        }
+
+        .btn-animate {
+            float: left;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 13px;
+            text-align: center;
+            color: rgba(255, 255, 255, 1);
+            padding-top: 8px;
+            width: 100%;
+            height: 35px;
+            border: none;
+            border-radius: 20px;
+            margin-top: 23px;
+            background-color: rgba(16, 89, 255, 1);
+            left: 0px;
+            top: 0px;
+            transition: all .5s ease, top .5s ease .5s, height .5s ease .5s, background-color .5s ease .75s;
+        }
+
+        .btn-animate-grow {
+            width: 130%;
+            height: 625px;
+            position: relative;
+            left: -55px;
+            top: -420px;
+            color: rgba(255, 255, 255, 0);
+            background-color: rgba(255, 255, 255, 1);
+        }
+
+        a.btn-signup:hover,
+        a.btn-signin:hover {
+            cursor: pointer;
+            background-color: #0F4FE6;
+            transition: background-color .5s;
+        }
+
+        .forgot {
+            height: 100px;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+            padding-top: 24px;
+            margin-top: -535px;
+            border-top: solid 1px rgba(255, 255, 255, .3);
+            transition: all 0.5s ease;
+        }
+
+        .forgot-left {
+            transform: translateX(-400px);
+            opacity: 0;
+        }
+
+        .forgot-fade {
+            opacity: 0;
+        }
+
+        .forgot a {
+            color: rgba(255, 255, 255, .3);
+            font-weight: 400;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .welcome {
+            width: 100%;
+            height: 50px;
+            position: relative;
+            color: rgba(35, 43, 85, 0.75);
+            opacity: 0;
+            transition: transform 1.5s ease .25s, opacity .1s ease 1s;
+        }
+
+        .welcome-left {
+            transform: translateY(-780px);
+            opacity: 1;
+        }
+
+        .cover-photo {
+            height: 150px;
+            position: relative;
+            left: 0px;
+            top: -900px;
+            background:
+                linear-gradient(rgba(35, 43, 85, 0.75),
+                    rgba(35, 43, 85, 0.95)),
+                url(https://dl.dropboxusercontent.com/u/22006283/preview/codepen/landscape-nature-man-person.jpeg);
+            background-size: cover;
+            opacity: 0;
+            transition: all 1.5s ease 0.55s;
+        }
+
+        .cover-photo-down {
+            top: -575px;
+            opacity: 1;
+        }
+
+        .profile-photo {
+            height: 125px;
+            width: 125px;
+            position: relative;
+            border-radius: 70px;
+            left: 155px;
+            top: -1000px;
+            background: url(https://dl.dropboxusercontent.com/u/22006283/preview/codepen/nature-water-rocks-hiking.jpg);
+            background-size: 100% 135%;
+            background-position: 100% 100%;
+            opacity: 0;
+            transition: top 1.5s ease 0.35s, opacity .75s ease .5s;
+            border: solid 3px #ffffff;
+        }
+
+        .profile-photo-down {
+            top: -636px;
+            opacity: 1;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 35px;
+            font-weight: 300;
+            text-align: center;
+        }
+
+        .btn-goback {
+            position: relative;
+            margin-right: auto;
+            top: -400px;
+            float: left;
+            padding: 8px;
+            width: 83%;
+            margin-left: 37px;
+            margin-right: 37px;
+            height: 35px;
+            border-radius: 20px;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 13px;
+            text-align: center;
+            color: #1059FF;
+            margin-top: -8px;
+            border: solid 1px #1059FF;
+            opacity: 0;
+            transition: top 1.5s ease 0.35s, opacity .75s ease .5s;
+        }
+
+        .btn-goback-up {
+            top: -1080px;
+            opacity: 1;
+        }
+
+        a.btn-goback:hover {
+            cursor: pointer;
+            background-color: #0F4FE6;
+            transition: all .5s;
+            color: #ffffff;
+        }
+
+        /* refresh button styling */
+
+        #refresh {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #ffffff;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.1);
+            padding: 13px 0 0 13px;
+        }
+
+        .refreshicon {
+            fill: #d3d3d3;
+            transform: rotate(0deg);
+            transition: fill .25s ease, transform .25s ease;
+        }
+
+        .refreshicon:hover {
+            cursor: pointer;
+            fill: #1059FF;
+            transform: rotate(180deg);
         }
     </style>
 </head>
-<body>
-    <header class="mobile-header">
-        <div class="header-buttons">
-            <button class="header-btn-left">
-                <i class="fas fa-plus"></i> Add Title
-            </button>
-            <button class="header-btn-right">
-                <i class="fas fa-book"></i> Add Chapter
-            </button>
-        </div>
-    </header>
-    <h1 style="padding: 20px;">Добавление нового тайтла</h1>
-    <form id="miniAppForm" style="padding: 0 20px;">
-        <div class="form-group">
-            <label for="name">Название</label>
-            <input type="text" id="name" name="name" required>
-        </div>
-        <div class="form-group">
-            <label for="altNames">Альтернативные названия</label>
-            <input type="text" id="altNames" name="altNames">
-        </div>
-        <div class="form-group">
-            <label for="description">Описание</label>
-            <textarea id="description" name="description" rows="4"></textarea>
-        </div>
-        <div class="form-group">
-            <label for="cover">Обложка</label>
-            <input type="file" id="cover" name="cover" accept="image/*">
-        </div>
-        <div class="form-group">
-            <label for="type">Тип</label>
-            <select id="type" name="type">
-                <option value="manhwa">Манхва</option>
-                <option value="manhua">Маньхуа</option>
-                <option value="manga">Манга</option>
-                <option value="comics">Комикс</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label for="year">Год</label>
-            <input type="number" id="year" name="year" min="1900" max="2100">
-        </div>
-        <div class="form-group">
-            <label for="status">Статус</label>
-            <select id="status" name="status">
-                <option value="anons">Анонс</option>
-                <option value="ongoing">Онгоинг</option>
-                <option value="completed">Выпущен</option>
-                <option value="stop">Приостоновлен</option>
-                <option value="canceled">Отменено</option>
-            </select>
-        </div>
-        <button type="button" onclick="submitForm()">Добавить</button>
-    </form>
 
-    <!-- Подключение Font Awesome для иконок -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
-    <script src="script.js"></script>
+<body>
+    <div class="container">
+        <div class="frame">
+            <div class="nav">
+                <ul class="links">
+                    <li class="signin-active"><a class="btn">Sign in</a></li>
+                    <li class="signup-inactive"><a class="btn">Sign up </a></li>
+                </ul>
+            </div>
+            <div>
+                <form class="form-signin" action="" method="post" name="form">
+                    <label for="username">Username</label>
+                    <input class="form-styling" type="text" name="username" placeholder="" />
+                    <label for="password">Password</label>
+                    <input class="form-styling" type="text" name="password" placeholder="" />
+                    <input type="checkbox" id="checkbox" />
+                    <label for="checkbox"><span class="ui"></span>Keep me signed in</label>
+                    <div class="btn-animate">
+                        <a class="btn-signin">Sign in</a>
+                    </div>
+                </form>
+
+                <form class="form-signup" action="" method="post" name="form">
+                    <label for="fullname">Full name</label>
+                    <input class="form-styling" type="text" name="fullname" placeholder="" />
+                    <label for="email">Email</label>
+                    <input class="form-styling" type="text" name="email" placeholder="" />
+                    <label for="password">Password</label>
+                    <input class="form-styling" type="text" name="password" placeholder="" />
+                    <label for="confirmpassword">Confirm password</label>
+                    <input class="form-styling" type="text" name="confirmpassword" placeholder="" />
+                    <a ng-click="checked = !checked" class="btn-signup">Sign Up</a>
+                </form>
+            </div>
+
+            <div class="forgot">
+                <a href="#">Forgot your password?</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Событие для кнопки с классом "btn"
+            document.querySelector(".btn").addEventListener("click", function () {
+                document.querySelector(".form-signin").classList.toggle("form-signin-left");
+                document.querySelector(".form-signup").classList.toggle("form-signup-left");
+                document.querySelector(".frame").classList.toggle("frame-long");
+                document.querySelector(".signup-inactive").classList.toggle("signup-active");
+                document.querySelector(".signin-active").classList.toggle("signin-inactive");
+                document.querySelector(".forgot").classList.toggle("forgot-left");
+
+                this.classList.remove("idle");
+                this.classList.add("active");
+            });
+
+            // Событие для кнопки с классом "btn-signup"
+            document.querySelector(".btn-signup").addEventListener("click", function () {
+                document.querySelector(".nav").classList.toggle("nav-up");
+                document.querySelector(".form-signup-left").classList.toggle("form-signup-down");
+                document.querySelector(".success").classList.toggle("success-left");
+                document.querySelector(".frame").classList.toggle("frame-short");
+            });
+
+            // Событие для кнопки с классом "btn-signin"
+            document.querySelector(".btn-signin").addEventListener("click", function () {
+                document.querySelector(".btn-animate").classList.toggle("btn-animate-grow");
+                document.querySelector(".welcome").classList.toggle("welcome-left");
+                document.querySelector(".cover-photo").classList.toggle("cover-photo-down");
+                document.querySelector(".frame").classList.toggle("frame-short");
+                document.querySelector(".profile-photo").classList.toggle("profile-photo-down");
+                document.querySelector(".btn-goback").classList.toggle("btn-goback-up");
+                document.querySelector(".forgot").classList.toggle("forgot-fade");
+            });
+        });
+
+    </script>
 </body>
+
 </html>
