@@ -177,6 +177,16 @@
             font-size: 13px;
         }
 
+        .textarea-styling {
+            width: 100%;
+            /* height: 150px; */
+            padding-left: 15px;
+            border: none;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, .2);
+        }
+
         .form-styling {
             width: 100%;
             height: 35px;
@@ -513,20 +523,39 @@
         <div class="frame">
             <div class="nav">
                 <ul class="links">
-                    <li class="signin-active"><a class="btn">Sign in</a></li>
-                    <li class="signup-inactive"><a class="btn">Sign up </a></li>
+                    <li class="signin-active"><a class="btn">Add Title</Title></a></li>
+                    <li class="signup-inactive"><a class="btn">Add Chapter </a></li>
                 </ul>
             </div>
             <div>
                 <form class="form-signin" action="" method="post" name="form">
-                    <label for="username">Username</label>
-                    <input class="form-styling" type="text" name="username" placeholder="" />
-                    <label for="password">Password</label>
-                    <input class="form-styling" type="text" name="password" placeholder="" />
-                    <input type="checkbox" id="checkbox" />
-                    <label for="checkbox"><span class="ui"></span>Keep me signed in</label>
+                    <label for="name">Название</label>
+                    <input class="form-styling" type="text" name="name" placeholder="" />
+                    <label for="altNames">Альтернативные названия</label>
+                    <textarea class="textarea-styling" type="text" name="altNames" rows="4"></textarea>
+                    <label for="description">Описание</label>
+                    <textarea class="textarea-styling" id="description" name="description" rows="4"></textarea>
+                    <label for="cover">Обложка</label>
+                    <input type="file" id="cover" name="cover" accept="image/*">
+                    <label for="type">Тип</label>
+                    <select id="type" name="type">
+                        <option value="manhwa">Манхва</option>
+                        <option value="manhua">Маньхуа</option>
+                        <option value="manga">Манга</option>
+                        <option value="comics">Комикс</option>
+                    </select>
+                    <label for="year">Год</label>
+                    <input type="number" id="year" name="year" min="1900" max="2100">
+                    <label for="status">Статус</label>
+                    <select id="status" name="status">
+                        <option value="anons">Анонс</option>
+                        <option value="ongoing">Онгоинг</option>
+                        <option value="completed">Выпущен</option>
+                        <option value="stop">Приостоновлен</option>
+                        <option value="canceled">Отменено</option>
+                    </select>
                     <div class="btn-animate">
-                        <a class="btn-signin">Sign in</a>
+                        <a class="btn-signin">Добавить Тайтл</a>
                     </div>
                 </form>
 
@@ -539,12 +568,8 @@
                     <input class="form-styling" type="text" name="password" placeholder="" />
                     <label for="confirmpassword">Confirm password</label>
                     <input class="form-styling" type="text" name="confirmpassword" placeholder="" />
-                    <a ng-click="checked = !checked" class="btn-signup">Sign Up</a>
+                    <a ng-click="checked = !checked" class="btn-signup">Добавить Главу</a>
                 </form>
-            </div>
-
-            <div class="forgot">
-                <a href="#">Forgot your password?</a>
             </div>
         </div>
     </div>
