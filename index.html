@@ -28,8 +28,66 @@
             cursor: pointer;
         }
     </style>
+    <style>
+        /* Шапка */
+.mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #4a90e2;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+/* Заголовок */
+.header-title {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+/* Кнопки */
+.header-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.header-btn {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #fff;
+    color: #4a90e2;
+    font-size: 1em;
+    font-weight: 500;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.header-btn i {
+    margin-right: 5px;
+}
+
+.header-btn:hover {
+    background-color: #e8f4ff;
+    color: #3a7bcf;
+}
+    </style>
 </head>
 <body>
+    <header class="mobile-header">
+        <div class="header-title">My App</div>
+        <div class="header-buttons">
+            <button class="header-btn">
+                <i class="fas fa-plus"></i> Add Title
+            </button>
+            <button class="header-btn">
+                <i class="fas fa-book"></i> Add Chapter
+            </button>
+        </div>
+    </header>
     <h1>Добавление нового тайтла</h1>
     <form id="miniAppForm">
         <div class="form-group">
