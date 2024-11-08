@@ -5,86 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Добавление нового тайтла</title>
     <style>
+        /* Убираем отступы по краям экрана */
         body {
             font-family: Arial, sans-serif;
-            padding: 20px;
+            margin: 0;
+            padding: 0;
         }
+
+        /* Шапка */
+        .mobile-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            background-color: #4a90e2;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Кнопки */
+        .header-buttons {
+            display: flex;
+            gap: 15px; /* Пробел между кнопками */
+        }
+
+        .header-btn {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px; /* Просторный отступ по горизонтали */
+            background-color: #fff;
+            color: #4a90e2;
+            font-size: 1em;
+            font-weight: 500;
+            border: none;
+            border-radius: 8px; /* Закругленные края */
+            border-radius: 8px 8px 0 0; /* Закругляем только нижние стороны */
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .header-btn i {
+            margin-right: 5px;
+        }
+
+        .header-btn:hover {
+            background-color: #e8f4ff;
+            color: #3a7bcf;
+        }
+
+        /* Стили для формы */
         .form-group {
             margin-bottom: 15px;
+            padding: 0 20px;
         }
+
         label {
             display: block;
             font-weight: bold;
             margin-bottom: 5px;
         }
+
         input, textarea, select {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
         }
+
         button {
             padding: 10px 15px;
             font-size: 16px;
             cursor: pointer;
         }
     </style>
-    <style>
-                /* Общие стили */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-                /* Шапка */
-        .mobile-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            background-color: #4a90e2;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
-        
-        /* Заголовок */
-        .header-title {
-            font-size: 1.5em;
-            font-weight: bold;
-        }
-        
-        /* Кнопки */
-        .header-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .header-btn {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            background-color: #fff;
-            color: #4a90e2;
-            font-size: 1em;
-            font-weight: 500;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .header-btn i {
-            margin-right: 5px;
-        }
-        
-        .header-btn:hover {
-            background-color: #e8f4ff;
-            color: #3a7bcf;
-        }
-    </style>
 </head>
 <body>
     <header class="mobile-header">
-        <div class="header-title">My App</div>
         <div class="header-buttons">
             <button class="header-btn">
                 <i class="fas fa-plus"></i> Add Title
@@ -94,8 +89,8 @@
             </button>
         </div>
     </header>
-    <h1>Добавление нового тайтла</h1>
-    <form id="miniAppForm">
+    <h1 style="padding: 20px;">Добавление нового тайтла</h1>
+    <form id="miniAppForm" style="padding: 0 20px;">
         <div class="form-group">
             <label for="name">Название</label>
             <input type="text" id="name" name="name" required>
@@ -138,6 +133,8 @@
         <button type="button" onclick="submitForm()">Добавить</button>
     </form>
 
+    <!-- Подключение Font Awesome для иконок -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
