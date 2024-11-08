@@ -9,7 +9,6 @@
     <style>
         html,
         body * {
-            padding: 0px;
             box-sizing: border-box;
             font-family: 'Open Sans', sans-serif;
         }
@@ -115,7 +114,7 @@
             padding-left: 37px;
             padding-right: 37px;
             margin-left: 400px;
-            margin-top: -195px;
+            margin-top: -490px;
             width: 100%;
             opacity: 0;
             transition: all .5s ease;
@@ -308,7 +307,6 @@
         }
 
         .btn-signup {
-            float: left;
             font-weight: 700;
             text-transform: uppercase;
             font-size: 13px;
@@ -335,6 +333,24 @@
 
         .btn-animate {
             float: left;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 13px;
+            text-align: center;
+            color: rgba(255, 255, 255, 1);
+            padding-top: 8px;
+            width: 100%;
+            height: 35px;
+            border: none;
+            border-radius: 20px;
+            margin-top: 23px;
+            background-color: rgba(16, 89, 255, 1);
+            left: 0px;
+            top: 0px;
+            transition: all .5s ease, top .5s ease .5s, height .5s ease .5s, background-color .5s ease .75s;
+        }
+
+        .btn-animate-second {
             font-weight: 700;
             text-transform: uppercase;
             font-size: 13px;
@@ -561,15 +577,13 @@
                 </form>
 
                 <form class="form-signup" action="" method="post" name="form">
-                    <label for="fullname">Full name</label>
+                    <label for="fullname">ID тайтла</label>
                     <input class="form-styling" type="text" name="fullname" placeholder="" />
-                    <label for="email">Email</label>
+                    <label for="email">Ссылка на главу</label>
                     <input class="form-styling" type="text" name="email" placeholder="" />
-                    <label for="password">Password</label>
-                    <input class="form-styling" type="text" name="password" placeholder="" />
-                    <label for="confirmpassword">Confirm password</label>
-                    <input class="form-styling" type="text" name="confirmpassword" placeholder="" />
-                    <a ng-click="checked = !checked" class="btn-signup">Добавить Главу</a>
+                    <div class="btn-animate-second">
+                        <a class="btn-signup">Добавить Главу</a>
+                    </div>
                 </form>
             </div>
         </div>
