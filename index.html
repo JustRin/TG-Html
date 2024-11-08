@@ -15,9 +15,9 @@
         /* Шапка */
         .mobile-header {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            padding: 10px;
+            padding: 0; /* Убираем внутренние отступы */
             background-color: #4a90e2;
             color: white;
             font-family: Arial, sans-serif;
@@ -26,22 +26,30 @@
         /* Кнопки */
         .header-buttons {
             display: flex;
-            gap: 15px; /* Пробел между кнопками */
+            width: 100%; /* Растягиваем кнопки на всю ширину */
         }
 
         .header-btn {
+            flex: 1; /* Кнопки равномерно занимают все пространство */
             display: flex;
             align-items: center;
-            padding: 8px 16px; /* Просторный отступ по горизонтали */
+            justify-content: center;
+            padding: 10px 0; /* Увеличиваем отступ сверху и снизу */
             background-color: #fff;
             color: #4a90e2;
             font-size: 1em;
             font-weight: 500;
             border: none;
-            border-radius: 8px; /* Закругленные края */
-            border-radius: 8px 8px 0 0; /* Закругляем только нижние стороны */
             cursor: pointer;
             transition: all 0.3s ease;
+        }
+
+        /* Скругляем только нужные углы */
+        .header-btn:first-child {
+            border-radius: 0 0 0 8px; /* Левый нижний угол у первой кнопки */
+        }
+        .header-btn:last-child {
+            border-radius: 0 0 8px 0; /* Правый нижний угол у второй кнопки */
         }
 
         .header-btn i {
@@ -51,30 +59,6 @@
         .header-btn:hover {
             background-color: #e8f4ff;
             color: #3a7bcf;
-        }
-
-        /* Стили для формы */
-        .form-group {
-            margin-bottom: 15px;
-            padding: 0 20px;
-        }
-
-        label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        input, textarea, select {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-
-        button {
-            padding: 10px 15px;
-            font-size: 16px;
-            cursor: pointer;
         }
     </style>
 </head>
