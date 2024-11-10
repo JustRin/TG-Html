@@ -30,16 +30,12 @@
             box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.2);
             overflow: hidden;
             transition: all .5s ease;
+            padding: 10px;
+            height: 100%;
         }
 
         .frame-long {
-            height: 615px;
-        }
-
-        .frame-short {
-            height: 400px;
-            margin-top: 50px;
-            box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.1);
+            height: 100%;
         }
 
         .nav {
@@ -65,7 +61,7 @@
             color: #ffffff;
         }
 
-        .signin-active a {
+        .add-title-active a {
             padding-bottom: 10px;
             color: #ffffff;
             text-decoration: none;
@@ -74,7 +70,7 @@
             cursor: pointer;
         }
 
-        .signin-inactive a {
+        .title-inactive a {
             padding-bottom: 0;
             color: rgba(255, 255, 255, .3);
             text-decoration: none;
@@ -82,7 +78,7 @@
             cursor: pointer;
         }
 
-        .signup-active a {
+        .chapter-active a {
             cursor: pointer;
             color: #ffffff;
             text-decoration: none;
@@ -90,14 +86,14 @@
             padding-bottom: 10px;
         }
 
-        .signup-inactive a {
+        .add-chapter-inactive a {
             cursor: pointer;
             color: rgba(255, 255, 255, .3);
             text-decoration: none;
             transition: all .25s ease;
         }
 
-        .form-signin {
+        .form-add-title {
             
             padding-left: 37px;
             padding-right: 37px;
@@ -105,74 +101,33 @@
             transition: opacity .5s ease, transform .5s ease;
         }
 
-        .form-signin-left {
-            transform: translateX(-400px);
+        .form-add-title-left {
+            transform: translateX(-3400px);
             opacity: .0;
         }
 
-        .form-signup {
+        .form-add-chapter {
             padding-left: 37px;
             padding-right: 37px;
-            margin-left: 400px;
+            margin-left: 3400px;
             margin-top: -490px;
             width: 100%;
             opacity: 0;
             transition: all .5s ease;
         }
 
-        .form-signup-left {
-            transform: translateX(-399px);
+        .form-add-chapter-left {
+            transform: translateX(-3399px);
             opacity: 1;
         }
 
-        .form-signup-down {
+        .form-add-chapter-down {
             top: 0px;
             opacity: 0;
         }
 
-        .success {
-            width: 80%;
-            height: 150px;
-            text-align: center;
-            position: relative;
-            top: -890px;
-            left: 450px;
-            opacity: .0;
-            transition: all .8s .4s ease;
-        }
-
-        .success-left {
-            transform: translateX(-406px);
-            opacity: 1;
-        }
-
-        .successtext {
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: 300;
-            margin-top: -35px;
-            padding-left: 37px;
-            padding-right: 37px;
-        }
-
-        #check path {
-            stroke: #ffffff;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            stroke-width: .85px;
-            stroke-dasharray: 60px 300px;
-            stroke-dashoffset: -166px;
-            fill: rgba(255, 255, 255, .0);
-            transition: stroke-dashoffset 2s ease .5s, fill 1.5s ease 1.0s;
-        }
-
-        #check.checked path {
-            stroke-dashoffset: 33px;
-            fill: rgba(255, 255, 255, .03);
-        }
-
-        .form-signin input,
-        .form-signup input {
+        .form-add-title input,
+        .form-add-chapter input {
             color: #ffffff;
             font-size: 13px;
         }
@@ -211,114 +166,14 @@
             outline: none;
         }
 
-        .form-signin input:focus,
-        textarea:focus,
-        .form-signup input:focus,
-        textarea:focus {
-            background: rgba(255, 255, 255, .3);
-            border: none;
-            padding-right: 40px;
-            transition: background .5s ease;
-        }
-
-        [type="checkbox"]:not(:checked),
-        [type="checkbox"]:checked {
-            position: absolute;
-            display: none;
-        }
-
-        [type="checkbox"]:not(:checked)+label,
-        [type="checkbox"]:checked+label {
-            position: relative;
-            padding-left: 85px;
-            padding-top: 2px;
-            cursor: pointer;
-            margin-top: 8px;
-        }
-
-        [type="checkbox"]:not(:checked)+label:before,
-        [type="checkbox"]:checked+label:before,
-        [type="checkbox"]:not(:checked)+label:after,
-        [type="checkbox"]:checked+label:after {
-            content: '';
-            position: absolute;
-        }
-
-        [type="checkbox"]:not(:checked)+label:before,
-        [type="checkbox"]:checked+label:before {
-            width: 65px;
-            height: 30px;
-            background: rgba(255, 255, 255, .2);
-            border-radius: 15px;
-            left: 0;
-            top: -3px;
-            transition: all .2s ease;
-        }
-
-        [type="checkbox"]:not(:checked)+label:after,
-        [type="checkbox"]:checked+label:after {
-            width: 10px;
-            height: 10px;
-            background: rgba(255, 255, 255, .7);
-            border-radius: 50%;
-            top: 7px;
-            left: 10px;
-            transition: all .2s ease;
-        }
-
-        /* on checked */
-        [type="checkbox"]:checked+label:before {
-            background: #0F4FE6;
-        }
-
-        [type="checkbox"]:checked+label:after {
-            background: #ffffff;
-            top: 7px;
-            left: 45px;
-        }
-
-        [type="checkbox"]:checked+label .ui,
-        [type="checkbox"]:not(:checked)+label .ui:before,
-        [type="checkbox"]:checked+label .ui:after {
-            position: absolute;
-            left: 6px;
-            width: 65px;
-            border-radius: 15px;
-            font-size: 14px;
-            font-weight: bold;
-            line-height: 22px;
-            transition: all .2s ease;
-        }
-
-        [type="checkbox"]:not(:checked)+label .ui:before {
-            content: "no";
-            left: 32px;
-            color: rgba(255, 255, 255, .7);
-        }
-
-        [type="checkbox"]:checked+label .ui:after {
-            content: "yes";
-            color: #ffffff;
-        }
-
-        [type="checkbox"]:focus+label:before {
-            box-sizing: border-box;
-            margin-top: -1px;
-        }
-
         .btn-signup {
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 13px;
-            text-align: center;
-            color: #ffffff;
             padding-top: 8px;
             width: 100%;
             height: 35px;
             border: none;
             border-radius: 20px;
-            margin-top: 23px;
-            background-color: #1059FF;
+            margin-top: -8px;
+
         }
 
         .btn-signin {
@@ -385,204 +240,63 @@
             transition: background-color .5s;
         }
 
-        .forgot {
-            height: 100px;
-            width: 80%;
-            margin-left: auto;
-            margin-right: auto;
-            text-align: center;
-            padding-top: 24px;
-            margin-top: -535px;
-            border-top: solid 1px rgba(255, 255, 255, .3);
-            transition: all 0.5s ease;
-        }
-
-        .forgot-left {
-            transform: translateX(-400px);
-            opacity: 0;
-        }
-
-        .forgot-fade {
-            opacity: 0;
-        }
-
-        .forgot a {
-            color: rgba(255, 255, 255, .3);
-            font-weight: 400;
-            font-size: 13px;
-            text-decoration: none;
-        }
-
-        .welcome {
-            width: 100%;
-            height: 50px;
-            position: relative;
-            color: rgba(35, 43, 85, 0.75);
-            opacity: 0;
-            transition: transform 1.5s ease .25s, opacity .1s ease 1s;
-        }
-
-        .welcome-left {
-            transform: translateY(-780px);
-            opacity: 1;
-        }
-
-        .cover-photo {
-            height: 150px;
-            position: relative;
-            left: 0px;
-            top: -900px;
-            background:
-                linear-gradient(rgba(35, 43, 85, 0.75),
-                    rgba(35, 43, 85, 0.95)),
-                url(https://dl.dropboxusercontent.com/u/22006283/preview/codepen/landscape-nature-man-person.jpeg);
-            background-size: cover;
-            opacity: 0;
-            transition: all 1.5s ease 0.55s;
-        }
-
-        .cover-photo-down {
-            top: -575px;
-            opacity: 1;
-        }
-
-        .profile-photo {
-            height: 125px;
-            width: 125px;
-            position: relative;
-            border-radius: 70px;
-            left: 155px;
-            top: -1000px;
-            background: url(https://dl.dropboxusercontent.com/u/22006283/preview/codepen/nature-water-rocks-hiking.jpg);
-            background-size: 100% 135%;
-            background-position: 100% 100%;
-            opacity: 0;
-            transition: top 1.5s ease 0.35s, opacity .75s ease .5s;
-            border: solid 3px #ffffff;
-        }
-
-        .profile-photo-down {
-            top: -636px;
-            opacity: 1;
-        }
-
         h1 {
             color: #ffffff;
             font-size: 35px;
             font-weight: 300;
             text-align: center;
         }
-
-        .btn-goback {
-            position: relative;
-            margin-right: auto;
-            top: -400px;
-            float: left;
-            padding: 8px;
-            width: 83%;
-            margin-left: 37px;
-            margin-right: 37px;
-            height: 35px;
-            border-radius: 20px;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 13px;
-            text-align: center;
-            color: #1059FF;
-            margin-top: -8px;
-            border: solid 1px #1059FF;
-            opacity: 0;
-            transition: top 1.5s ease 0.35s, opacity .75s ease .5s;
-        }
-
-        .btn-goback-up {
-            top: -1080px;
-            opacity: 1;
-        }
-
-        a.btn-goback:hover {
-            cursor: pointer;
-            background-color: #0F4FE6;
-            transition: all .5s;
-            color: #ffffff;
-        }
-
-        /* refresh button styling */
-
-        #refresh {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: #ffffff;
-            width: 50px;
-            height: 50px;
-            border-radius: 25px;
-            box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.1);
-            padding: 13px 0 0 13px;
-        }
-
-        .refreshicon {
-            fill: #d3d3d3;
-            transform: rotate(0deg);
-            transition: fill .25s ease, transform .25s ease;
-        }
-
-        .refreshicon:hover {
-            cursor: pointer;
-            fill: #1059FF;
-            transform: rotate(180deg);
-        }
     </style>
 </head>
 
 <body>
-    <div class="container">
+    <div>
         <div class="frame">
             <div class="nav">
                 <ul class="links">
-                    <li class="signin-active"><a class="btn">Add Title</Title></a></li>
-                    <li class="signup-inactive"><a class="btn">Add Chapter </a></li>
+                    <li class="add-title-active"><a class="btn">Add Title</Title></a></li>
+                    <li class="add-chapter-inactive"><a class="btn">Add Chapter </a></li>
                 </ul>
             </div>
             <div>
-                <form class="form-signin" action="" method="post" name="form">
+                <form class="form-add-title" action="" method="post" name="form">
                     <label for="name">Название</label>
-                    <input class="form-styling" type="text" name="name" placeholder="" />
+                    <input class="form-styling" type="text" id="name" name="name" placeholder="" />
                     <label for="altNames">Альтернативные названия</label>
-                    <textarea class="textarea-styling" type="text" name="altNames" rows="4"></textarea>
+                    <textarea class="textarea-styling" type="text" id="altNames" name="altNames" rows="4"></textarea>
                     <label for="description">Описание</label>
                     <textarea class="textarea-styling" id="description" name="description" rows="4"></textarea>
                     <label for="cover">Обложка</label>
-                    <input type="file" id="cover" name="cover" accept="image/*">
+                    <input class="form-styling" type="file" id="cover" name="cover" accept="image/*">
                     <label for="type">Тип</label>
-                    <select id="type" name="type">
-                        <option value="manhwa">Манхва</option>
-                        <option value="manhua">Маньхуа</option>
-                        <option value="manga">Манга</option>
-                        <option value="comics">Комикс</option>
+                    <select class="form-styling" id="type" name="type">
+                        <option value="1">Манхва</option>
+                        <option value="2">Маньхуа</option>
+                        <option value="3">Манга</option>
+                        <option value="4">Комикс</option>
                     </select>
                     <label for="year">Год</label>
-                    <input type="number" id="year" name="year" min="1900" max="2100">
+                    <input class="form-styling" type="number" id="year" name="year" min="1900" max="2100">
                     <label for="status">Статус</label>
-                    <select id="status" name="status">
-                        <option value="anons">Анонс</option>
-                        <option value="ongoing">Онгоинг</option>
-                        <option value="completed">Выпущен</option>
-                        <option value="stop">Приостоновлен</option>
-                        <option value="canceled">Отменено</option>
+                    <select class="form-styling" id="status" name="status">
+                        <option value="1">Анонс</option>
+                        <option value="2">Онгоинг</option>
+                        <option value="3">Выпущен</option>
+                        <option value="4">Приостоновлен</option>
+                        <option value="5">Отменено</option>
                     </select>
                     <div class="btn-animate">
-                        <a class="btn-signin">Добавить Тайтл</a>
+                        <a class="btn-signin" onclick="sendData()">Добавить Тайтл</a>
                     </div>
                 </form>
 
-                <form class="form-signup" action="" method="post" name="form">
-                    <label for="fullname">ID тайтла</label>
-                    <input class="form-styling" type="text" name="fullname" placeholder="" />
-                    <label for="email">Ссылка на главу</label>
-                    <input class="form-styling" type="text" name="email" placeholder="" />
+                <form class="form-add-chapter" action="" method="post" name="form">
+                    <label for="titleID">ID тайтла</label>
+                    <input class="form-styling" type="text" name="titleID" placeholder="" />
+                    <label for="linkChapter">Ссылка на главу</label>
+                    <input class="form-styling" type="text" name="linkChapter" placeholder="" />
                     <div class="btn-animate-second">
-                        <a class="btn-signup">Добавить Главу</a>
+                        <a class="btn-signup" onclick="sendChapter()">Добавить Главу</a>
                     </div>
                 </form>
             </div>
@@ -592,37 +306,44 @@
     <script>
         $(function () {
             $(".btn").click(function () {
-                $(".form-signin").toggleClass("form-signin-left");
-                $(".form-signup").toggleClass("form-signup-left");
+                $(".form-add-title").toggleClass("form-add-title-left");
+                $(".form-add-chapter").toggleClass("form-add-chapter-left");
                 $(".frame").toggleClass("frame-long");
-                $(".signup-inactive").toggleClass("signup-active");
-                $(".signin-active").toggleClass("signin-inactive");
-                $(".forgot").toggleClass("forgot-left");
+                $(".add-chapter-inactive").toggleClass("chapter-active");
+                $(".add-title-active").toggleClass("title-inactive");
                 $(this).removeClass("idle").addClass("active");
             });
         });
 
-        $(function () {
-            $(".btn-signup").click(function () {
-                $(".nav").toggleClass("nav-up");
-                $(".form-signup-left").toggleClass("form-signup-down");
-                $(".success").toggleClass("success-left");
-                $(".frame").toggleClass("frame-short");
-            });
-        });
+    </script>
+    <script>
+        // Инициализация Telegram Web App
+        Telegram.WebApp.init();
 
-        $(function () {
-            $(".btn-signin").click(function () {
-                $(".btn-animate").toggleClass("btn-animate-grow");
-                $(".welcome").toggleClass("welcome-left");
-                $(".cover-photo").toggleClass("cover-photo-down");
-                $(".frame").toggleClass("frame-short");
-                $(".profile-photo").toggleClass("profile-photo-down");
-                $(".btn-goback").toggleClass("btn-goback-up");
-                $(".forgot").toggleClass("forgot-fade");
-            });
-        });
+        function sendData() {
+            const formData = {
+                name: document.getElementById('name').value,
+                altNames: document.getElementById('altNames').value,
+                description: document.getElementById('description').value,
+                cover: document.getElementById('cover').value,
+                type: document.getElementById('type').value,
+                year: document.getElementById('year').value,
+                status: document.getElementById('status').value
+            };
 
+            // Отправка данных в Telegram бот
+            Telegram.WebApp.sendData(JSON.stringify(formData));
+        }
+
+        function sendChapter() {
+            const formData = {
+                titleID: document.getElementById('titleID').value,
+                linkChapter: document.getElementById('linkChapter').value
+            };
+
+            // Отправка данных в Telegram бот
+            Telegram.WebApp.sendData(JSON.stringify(formData));
+        }
     </script>
 </body>
 
