@@ -19,6 +19,7 @@
         }
         img {
             max-width: 100%;
+            margin: 10px 0;
         }
     </style>
 </head>
@@ -35,7 +36,7 @@
     <script>
         // Функция для получения изображений
         async function fetchImages() {
-                        // Получаем строку запроса из URL
+            // Получаем строку запроса из URL
             const params = new URLSearchParams(window.location.search);
             
             // Пример получения конкретного параметра
@@ -51,12 +52,19 @@
                     const container = document.getElementById('image-container');
                     container.innerHTML = ''; // Очищаем контейнер перед добавлением изображений
 
-                    images.forEach(imgSrc => {
+                    // Функция для загрузки изображений по очереди
+                    for (let i = 0; i < images.length; i++) {
+                        const imgSrc = images[i];
                         const imgElement = document.createElement('img');
                         imgElement.src = imgSrc; // Устанавливаем источник изображения
                         imgElement.alt = 'Image';
-                        container.appendChild(imgElement); // Добавляем изображение в контейнер
-                    });
+                        
+                        // Добавляем изображение в контейнер
+                        container.appendChild(imgElement);
+
+                        // Ожидание перед добавлением следующего изображения (например, 1 секунда)
+                        await new Promise(resolve => setTimeout(resolve, 1000));
+                    }
                 } else {
                     alert('Нет изображений для отображения.');
                 }
