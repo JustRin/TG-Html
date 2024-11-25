@@ -3,26 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Парсинг Teletype</title>
+    <title>Изображения с Teletype</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .image-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        img {
+            max-width: 80%;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 <body>
-    <div id="response"></div>
-<script>
-    fetch('https://sitecopy.pro/parsing.php', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Referrer': 'https://justrin.github.io', // Попытка указать реферер
-    },
-    body: 'type=html&link=https%3A%2F%2Fteletype.in%2F%40scmanga%2Fvoskhozhdenie-bezymyannogo-boga--tom-1-glava-120-5'
-})
-.then(response => response.text())
-.then(data => {
-    console.log(data); // Выводим ответ
-    document.getElementById('response').innerText = data;
-})
-.catch(error => console.error('Error:', error));
+    <div id="image-container" class="image-container">
+        <h2>Загрузка изображений...</h2>
+    </div>
 
-</script> 
+    <script>
+        // Функция для получения изображений
+        async function fetchImages() {
+            const url = "https://teletype.in/@scmanga/voskhozhdenie-bezymyannogo-boga--tom-1-glava-120-5"; // Укажите нужную ссылку здесь
+            const apiUrl = `http://86.38.156.29:3000/get-links?url=${encodeURIComponent(url)}`;
+
+            try {
+                const response = await fetch(apiUrl); // Отправляем запрос на API
+                const images = await response.json(); // Получаем массив ссылок на изображения
+
+                if (Array.isArray(images) && images.length > 0) {
+                    const container = document.getElementById('image-container');
+                    container.innerHTML = ''; // Очищаем контейнер перед добавлением изображений
+
+                    images.forEach(imgSrc => {
+                        const imgElement = document.createElement('img');
+                        imgElement.src = imgSrc; // Устанавливаем источник изображения
+                        imgElement.alt = 'Image';
+                        container.appendChild(imgElement); // Добавляем изображение в контейнер
+                    });
+                } else {
+                    alert('Нет изображений для отображения.');
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке изображений:', error);
+                alert('Произошла ошибка при загрузке изображений.');
+            }
+        }
+
+        // Вызов функции для получения изображений при загрузке страницы
+        fetchImages();
+    </script>
 </body>
 </html>
