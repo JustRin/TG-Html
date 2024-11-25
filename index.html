@@ -1,350 +1,47 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Добавление нового тайтла</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        html,
-        body * {
-            box-sizing: border-box;
-            font-family: 'Open Sans', sans-serif;
-        }
-
-        body {
-            background:
-                linear-gradient(rgba(246, 247, 249, 0.8),
-                    rgba(246, 247, 249, 0.8)),
-                url(https://dl.dropboxusercontent.com/u/22006283/preview/codepen/sky-clouds-cloudy-mountain.jpg) no-repeat center center fixed;
-            background-size: cover;
-        }
-
-        .frame {
-            background:
-                linear-gradient(rgba(35, 43, 85, 0.75),
-                    rgba(35, 43, 85, 0.95)),
-                url(https://dl.dropboxusercontent.com/u/22006283/preview/codepen/clouds-cloudy-forest-mountain.jpg) no-repeat center center;
-            border-radius: 5px;
-            box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
-            transition: all .5s ease;
-            padding: 10px;
-            height: 100%;
-        }
-
-        .frame-long {
-            height: 100%;
-        }
-
-        .nav {
-            width: 100%;
-            height: 100px;
-            padding-top: 40px;
-            opacity: 1;
-            transition: all .5s ease;
-        }
-
-        .nav-up {
-            transform: translateY(-100px);
-            opacity: 0;
-        }
-
-        li {
-            padding-left: 10px;
-            font-size: 18px;
-            display: inline;
-            text-align: left;
-            text-transform: uppercase;
-            padding-right: 10px;
-            color: #ffffff;
-        }
-
-        .add-title-active a {
-            padding-bottom: 10px;
-            color: #ffffff;
-            text-decoration: none;
-            border-bottom: solid 2px #1059FF;
-            transition: all .25s ease;
-            cursor: pointer;
-        }
-
-        .title-inactive a {
-            padding-bottom: 0;
-            color: rgba(255, 255, 255, .3);
-            text-decoration: none;
-            border-bottom: none;
-            cursor: pointer;
-        }
-
-        .chapter-active a {
-            cursor: pointer;
-            color: #ffffff;
-            text-decoration: none;
-            border-bottom: solid 2px #1059FF;
-            padding-bottom: 10px;
-        }
-
-        .add-chapter-inactive a {
-            cursor: pointer;
-            color: rgba(255, 255, 255, .3);
-            text-decoration: none;
-            transition: all .25s ease;
-        }
-
-        .form-add-title {
-            
-            padding-left: 37px;
-            padding-right: 37px;
-
-            transition: opacity .5s ease, transform .5s ease;
-        }
-
-        .form-add-title-left {
-            transform: translateX(-3400px);
-            opacity: .0;
-        }
-
-        .form-add-chapter {
-            padding-left: 37px;
-            padding-right: 37px;
-            margin-left: 3400px;
-            margin-top: -490px;
-            width: 100%;
-            opacity: 0;
-            transition: all .5s ease;
-        }
-
-        .form-add-chapter-left {
-            transform: translateX(-3399px);
-            opacity: 1;
-        }
-
-        .form-add-chapter-down {
-            top: 0px;
-            opacity: 0;
-        }
-
-        .form-add-title input,
-        .form-add-chapter input {
-            color: #ffffff;
-            font-size: 13px;
-        }
-
-        .textarea-styling {
-            width: 100%;
-            /* height: 150px; */
-            padding-left: 15px;
-            border: none;
-            border-radius: 20px;
-            margin-bottom: 20px;
-            background: rgba(255, 255, 255, .2);
-        }
-
-        .form-styling {
-            width: 100%;
-            height: 35px;
-            padding-left: 15px;
-            border: none;
-            border-radius: 20px;
-            margin-bottom: 20px;
-            background: rgba(255, 255, 255, .2);
-        }
-
-        label {
-            font-weight: 400;
-            text-transform: uppercase;
-            font-size: 13px;
-            padding-left: 15px;
-            padding-bottom: 10px;
-            color: rgba(255, 255, 255, .7);
-            display: block;
-        }
-
-        :focus {
-            outline: none;
-        }
-
-        .btn-signup {
-            padding-top: 8px;
-            width: 100%;
-            height: 35px;
-            border: none;
-            border-radius: 20px;
-            margin-top: -8px;
-
-        }
-
-        .btn-signin {
-            float: left;
-            padding-top: 8px;
-            width: 100%;
-            height: 35px;
-            border: none;
-            border-radius: 20px;
-            margin-top: -8px;
-        }
-
-        .btn-animate {
-            float: left;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 13px;
-            text-align: center;
-            color: rgba(255, 255, 255, 1);
-            padding-top: 8px;
-            width: 100%;
-            height: 35px;
-            border: none;
-            border-radius: 20px;
-            margin-top: 23px;
-            background-color: rgba(16, 89, 255, 1);
-            left: 0px;
-            top: 0px;
-            transition: all .5s ease, top .5s ease .5s, height .5s ease .5s, background-color .5s ease .75s;
-        }
-
-        .btn-animate-second {
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 13px;
-            text-align: center;
-            color: rgba(255, 255, 255, 1);
-            padding-top: 8px;
-            width: 100%;
-            height: 35px;
-            border: none;
-            border-radius: 20px;
-            margin-top: 23px;
-            background-color: rgba(16, 89, 255, 1);
-            left: 0px;
-            top: 0px;
-            transition: all .5s ease, top .5s ease .5s, height .5s ease .5s, background-color .5s ease .75s;
-        }
-
-        .btn-animate-grow {
-            width: 130%;
-            height: 625px;
-            position: relative;
-            left: -55px;
-            top: -420px;
-            color: rgba(255, 255, 255, 0);
-            background-color: rgba(255, 255, 255, 1);
-        }
-
-        a.btn-signup:hover,
-        a.btn-signin:hover {
-            cursor: pointer;
-            background-color: #0F4FE6;
-            transition: background-color .5s;
-        }
-
-        h1 {
-            color: #ffffff;
-            font-size: 35px;
-            font-weight: 300;
-            text-align: center;
-        }
-    </style>
+    <title>Парсинг Teletype</title>
 </head>
-
 <body>
-    <div>
-        <div class="frame">
-            <div class="nav">
-                <ul class="links">
-                    <li class="add-title-active"><a class="btn">Add Title</Title></a></li>
-                    <li class="add-chapter-inactive"><a class="btn">Add Chapter </a></li>
-                </ul>
-            </div>
-            <div>
-                <form class="form-add-title" action="" method="post" name="form">
-                    <label for="name">Название</label>
-                    <input class="form-styling" type="text" id="name" name="name" placeholder="" />
-                    <label for="altNames">Альтернативные названия</label>
-                    <textarea class="textarea-styling" type="text" id="altNames" name="altNames" rows="4"></textarea>
-                    <label for="description">Описание</label>
-                    <textarea class="textarea-styling" id="description" name="description" rows="4"></textarea>
-                    <label for="cover">Обложка</label>
-                    <input class="form-styling" type="file" id="cover" name="cover" accept="image/*">
-                    <label for="type">Тип</label>
-                    <select class="form-styling" id="type" name="type">
-                        <option value="1">Манхва</option>
-                        <option value="2">Маньхуа</option>
-                        <option value="3">Манга</option>
-                        <option value="4">Комикс</option>
-                    </select>
-                    <label for="year">Год</label>
-                    <input class="form-styling" type="number" id="year" name="year" min="1900" max="2100">
-                    <label for="status">Статус</label>
-                    <select class="form-styling" id="status" name="status">
-                        <option value="1">Анонс</option>
-                        <option value="2">Онгоинг</option>
-                        <option value="3">Выпущен</option>
-                        <option value="4">Приостоновлен</option>
-                        <option value="5">Отменено</option>
-                    </select>
-                    <div class="btn-animate">
-                        <a class="btn-signin" onclick="sendData()">Добавить Тайтл</a>
-                    </div>
-                </form>
+    <h1>Парсинг страницы Teletype</h1>
+    
+    <label for="chapter">Введите номер главы (например, "tom-1-glava-120-5"):</label>
+    <input type="text" id="chapter" value="voskhozhdenie-bezymyannogo-boga--tom-1-glava-120-5">
+    <button onclick="loadPage()">Загрузить страницу</button>
 
-                <form class="form-add-chapter" action="" method="post" name="form">
-                    <label for="titleID">ID тайтла</label>
-                    <input class="form-styling" type="text" name="titleID" placeholder="" />
-                    <label for="linkChapter">Ссылка на главу</label>
-                    <input class="form-styling" type="text" name="linkChapter" placeholder="" />
-                    <div class="btn-animate-second">
-                        <a class="btn-signup" onclick="sendChapter()">Добавить Главу</a>
-                    </div>
-                </form>
-            </div>
-        </div>
+    <div id="content">
+        <!-- Здесь будет отображаться контент из Teletype -->
     </div>
-    <script src="https://code.jquery.com/jquery-3.7.1.slim.js" integrity="sha256-UgvvN8vBkgO0luPSUl2s8TIlOSYRoGFAX4jlCIm9Adc=" crossorigin="anonymous"></script>
+
     <script>
-        $(function () {
-            $(".btn").click(function () {
-                $(".form-add-title").toggleClass("form-add-title-left");
-                $(".form-add-chapter").toggleClass("form-add-chapter-left");
-                $(".frame").toggleClass("frame-long");
-                $(".add-chapter-inactive").toggleClass("chapter-active");
-                $(".add-title-active").toggleClass("title-inactive");
-                $(this).removeClass("idle").addClass("active");
-            });
-        });
+        function loadPage() {
+            const chapter = document.getElementById('chapter').value; // Берем введенное значение
+            const url = `https://teletype.in/@scmanga/${chapter}`;
 
-    </script>
-    <script>
-        // Инициализация Telegram Web App
-        Telegram.WebApp.init();
-
-        function sendData() {
-            const formData = {
-                name: document.getElementById('name').value,
-                altNames: document.getElementById('altNames').value,
-                description: document.getElementById('description').value,
-                cover: document.getElementById('cover').value,
-                type: document.getElementById('type').value,
-                year: document.getElementById('year').value,
-                status: document.getElementById('status').value
-            };
-
-            // Отправка данных в Telegram бот
-            Telegram.WebApp.sendData(JSON.stringify(formData));
-        }
-
-        function sendChapter() {
-            const formData = {
-                titleID: document.getElementById('titleID').value,
-                linkChapter: document.getElementById('linkChapter').value
-            };
-
-            // Отправка данных в Telegram бот
-            Telegram.WebApp.sendData(JSON.stringify(formData));
+            // Загружаем страницу
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    // Парсим HTML страницу
+                    const doc = new DOMParser().parseFromString(html, 'text/html');
+                    
+                    // Извлекаем основной контент, например, статью
+                    const content = doc.querySelector('.article'); // Предположим, что контент в этом классе
+                    
+                    if (content) {
+                        document.getElementById('content').innerHTML = content.innerHTML;
+                    } else {
+                        document.getElementById('content').innerHTML = '<p>Контент не найден.</p>';
+                    }
+                })
+                .catch(err => {
+                    console.warn('Ошибка при загрузке страницы:', err);
+                    document.getElementById('content').innerHTML = '<p>Произошла ошибка при загрузке страницы.</p>';
+                });
         }
     </script>
 </body>
-
 </html>
