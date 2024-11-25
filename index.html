@@ -8,41 +8,20 @@
 <body>
     <div id="response"></div>
 <script>
-  // Функция для отправки запроса
-function sendRequest() {
-    // Создание объекта для отправки запроса
-    const xhr = new XMLHttpRequest();
-    
-    // URL, на который будет отправлен запрос
-    const url = 'https://sitecopy.pro/parsing.php';
-    
-    // Данные для отправки (сформированы как параметры формы)
-    const params = 'type=html&link=https%3A%2F%2Fteletype.in%2F%40scmanga%2Fvoskhozhdenie-bezymyannogo-boga--tom-1-glava-120-5';
-    
-    // Открытие запроса методом POST
-    xhr.open('POST', url, true);
-    
-    // Установка заголовков
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    
-    // Обработка ответа
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            // Выводим полученный ответ в виде текста
-            console.log(xhr.responseText);
-            // Выводим ответ на страницу
-            document.getElementById('response').innerText = xhr.responseText;
-        }
-    };
-    
-    // Отправка запроса с параметрами
-    xhr.send(params);
-}
-
-// Вызов функции при загрузке страницы
-window.onload = function() {
-    sendRequest();
-};
+    fetch('https://sitecopy.pro/parsing.php', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Referrer': 'https://justrin.github.io', // Попытка указать реферер
+    },
+    body: 'type=html&link=https%3A%2F%2Fteletype.in%2F%40scmanga%2Fvoskhozhdenie-bezymyannogo-boga--tom-1-glava-120-5'
+})
+.then(response => response.text())
+.then(data => {
+    console.log(data); // Выводим ответ
+    document.getElementById('response').innerText = data;
+})
+.catch(error => console.error('Error:', error));
 
 </script> 
 </body>
