@@ -6,45 +6,31 @@
     <title>Парсинг Teletype</title>
 </head>
 <body>
-    <h1>Парсинг страницы Teletype</h1>
+    <iframe id="myIframe" src="https://teletype.in/@scmanga/voskhozhdenie-bezymyannogo-boga--tom-1-glava-120-5" width="100%" height="600"></iframe>
+<script>
+  window.onload = function() {
+    const iframe = document.getElementById('myIframe');
+
+    iframe.onload = function() {
+      const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+      const iframeBody = iframeDocument.body;
+
+      // Перемещаем содержимое в основную страницу
+      const content = iframeBody.innerHTML;
+
+      // Очищаем iframe, если нужно
+      iframeBody.innerHTML = '';
+
+      // Добавляем содержимое в основной документ
+      document.getElementById('mainContent').innerHTML = content;
+
+      // Убираем лишние элементы
+      const unnecessaryElements = document.querySelectorAll('.ad, .sidebar');
+      unnecessaryElements.forEach(el => el.remove());
+    };
+  };
+</script>
+<div id="mainContent"></div>
     
-    <label for="chapter">Введите номер главы (например, "tom-1-glava-120-5"):</label>
-    <input type="text" id="chapter" value="voskhozhdenie-bezymyannogo-boga--tom-1-glava-120-5">
-    <button onclick="loadPage()">Загрузить страницу</button>
-
-    <div id="content">
-        <!-- Здесь будет отображаться контент из Teletype -->
-    </div>
-
-    <iframe src="https://teletype.in/@scmanga/voskhozhdenie-bezymyannogo-boga--tom-1-glava-120-5" width="100%" height="600"></iframe>
-
-
-    <script>
-        function loadPage() {
-            const chapter = document.getElementById('chapter').value; // Берем введенное значение
-            const url = `https://teletype.in/@scmanga/${chapter}`;
-
-            // Загружаем страницу
-            fetch(url)
-                .then(response => response.text())
-                .then(html => {
-                    // Парсим HTML страницу
-                    const doc = new DOMParser().parseFromString(html, 'text/html');
-                    
-                    // Извлекаем основной контент, например, статью
-                    const content = doc.querySelector('.article'); // Предположим, что контент в этом классе
-                    
-                    if (content) {
-                        document.getElementById('content').innerHTML = content.innerHTML;
-                    } else {
-                        document.getElementById('content').innerHTML = '<p>Контент не найден.</p>';
-                    }
-                })
-                .catch(err => {
-                    console.warn('Ошибка при загрузке страницы:', err);
-                    document.getElementById('content').innerHTML = '<p>Произошла ошибка при загрузке страницы. Ошибка </p>' + err;
-                });
-        }
-    </script>
 </body>
 </html>
