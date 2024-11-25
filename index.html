@@ -39,7 +39,7 @@
                 })
                 .catch(err => {
                     console.warn('Ошибка при загрузке страницы:', err);
-                    document.getElementById('content').innerHTML = '<p>Произошла ошибка при загрузке страницы.</p>';
+                    document.getElementById('content').innerHTML = '<p>Произошла ошибка при загрузке страницы. Ошибка </p>' + err;
                 });
         }
     </script>
