@@ -6,30 +6,44 @@
     <title>Парсинг Teletype</title>
 </head>
 <body>
-    <iframe id="myIframe" src="https://teletype.in/@scmanga/voskhozhdenie-bezymyannogo-boga--tom-1-glava-120-5" width="100%" height="600"></iframe>
-    <div id="mainContent"></div>
+    <div id="response"></div>
 <script>
-  window.onload = function() {
-    const iframe = document.getElementById('myIframe');
-
-    iframe.onload = function() {
-      const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
-      const iframeBody = iframeDocument.body;
-
-      // Перемещаем содержимое в основную страницу
-      const content = iframeBody.innerHTML;
-
-      // Очищаем iframe, если нужно
-      iframeBody.innerHTML = '';
-
-      // Добавляем содержимое в основной документ
-      document.getElementById('mainContent').innerHTML = content;
-
-      // Убираем лишние элементы
-      const unnecessaryElements = document.querySelectorAll('.ad, .sidebar');
-      unnecessaryElements.forEach(el => el.remove());
+  // Функция для отправки запроса
+function sendRequest() {
+    // Создание объекта для отправки запроса
+    const xhr = new XMLHttpRequest();
+    
+    // URL, на который будет отправлен запрос
+    const url = 'https://sitecopy.pro/parsing.php';
+    
+    // Данные для отправки (сформированы как параметры формы)
+    const params = 'type=html&link=https%3A%2F%2Fteletype.in%2F%40scmanga%2Fvoskhozhdenie-bezymyannogo-boga--tom-1-glava-120-5';
+    
+    // Открытие запроса методом POST
+    xhr.open('POST', url, true);
+    
+    // Установка заголовков
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    
+    // Обработка ответа
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+            // Выводим полученный ответ в виде текста
+            console.log(xhr.responseText);
+            // Выводим ответ на страницу
+            document.getElementById('response').innerText = xhr.responseText;
+        }
     };
-  };
+    
+    // Отправка запроса с параметрами
+    xhr.send(params);
+}
+
+// Вызов функции при загрузке страницы
+window.onload = function() {
+    sendRequest();
+};
+
 </script> 
 </body>
 </html>
