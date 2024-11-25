@@ -35,7 +35,12 @@
     <script>
         // Функция для получения изображений
         async function fetchImages() {
-            const url = "https://teletype.in/@scmanga/voskhozhdenie-bezymyannogo-boga--tom-1-glava-120-5"; // Укажите нужную ссылку здесь
+                        // Получаем строку запроса из URL
+            const params = new URLSearchParams(window.location.search);
+            
+            // Пример получения конкретного параметра
+            const paramValue = params.get('url'); // Замените 'paramName' на имя параметра
+            const url = paramValue; // Укажите нужную ссылку здесь
             const apiUrl = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(url)}`;
 
             try {
