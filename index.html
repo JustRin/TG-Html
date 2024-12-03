@@ -117,7 +117,7 @@
 
                     // Функция для загрузки изображений по очереди
                     for (let i = 0; i < images.length; i++) {
-                        const imgSrc = images[i];
+                        const imgSrc = images[0][i];
                         const imgElement = document.createElement('img');
                         imgElement.src = imgSrc; // Устанавливаем источник изображения
                         imgElement.alt = 'Image';
