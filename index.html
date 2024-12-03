@@ -94,56 +94,79 @@
     </div>
 
     <script>
-        // Функция для получения изображений
-        async function fetchImages() {
-            // Получаем строку запроса из URL
-            const params = new URLSearchParams(window.location.search);
-            
-            // Пример получения конкретного параметра
-            const paramValue = params.get('url'); // Замените 'paramName' на имя параметра
-            const url = paramValue; // Укажите нужную ссылку здесь
-            const apiUrl = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(url)}`;
+    async function fetchImages() {
+        const params = new URLSearchParams(window.location.search);
+        const url = params.get('url');
+        const apiUrl = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(url)}`;
 
-            try {
-                const response = await fetch(apiUrl); // Отправляем запрос на API
-                const images = await response.json(); // Получаем массив ссылок на изображения
+        try {
+            const response = await fetch(apiUrl);
+            const images = await response.json();
 
-                const container = document.getElementById('image-container');
-                const loader = document.getElementById('loader');
-                loader.style.display = 'none'; // Скрываем анимацию загрузки
+            const container = document.getElementById('image-container');
+            const loader = document.getElementById('loader');
+            loader.style.display = 'none';
 
-                if (Array.isArray(images) && images.length > 0) {
-                    container.innerHTML = ''; // Очищаем контейнер перед добавлением изображений
+            if (Array.isArray(images) && images.length > 0) {
+                container.innerHTML = '';
 
-                    // Функция для загрузки изображений по очереди
-                    for (let i = 0; i < images.length; i++) {
-                        const imgSrc = images[0][i];
-                        const imgElement = document.createElement('img');
-                        imgElement.src = imgSrc; // Устанавливаем источник изображения
-                        imgElement.alt = 'Image';
+                for (let i = 0; i < images.length; i++) {
+                    const imgData = images[i];
+                    const imgElement = document.createElement('img');
+                    imgElement.alt = 'Image';
 
-                        // Добавляем изображение в контейнер
-                        container.appendChild(imgElement);
+                    // Функция для загрузки изображения с проверкой тайм-аута
+                    const loadImageWithFallback = (imgSrc, fallbackSrc, timeout = 5000) => {
+                        return new Promise((resolve, reject) => {
+                            const img = new Image();
+                            let timedOut = false;
 
-                        // Дожидаемся загрузки изображения перед добавлением следующего
-                        imgElement.onload = () => {
-                            imgElement.style.opacity = 1; // Плавное появление изображения
-                        };
+                            const timer = setTimeout(() => {
+                                timedOut = true;
+                                img.src = fallbackSrc; // Переключение на альтернативное изображение
+                            }, timeout);
 
-                        // Ожидание перед добавлением следующего изображения (например, 1 секунда)
-                        await new Promise(resolve => setTimeout(resolve, 1000));
+                            img.onload = () => {
+                                if (!timedOut) {
+                                    clearTimeout(timer);
+                                    resolve(img);
+                                }
+                            };
+
+                            img.onerror = () => {
+                                if (!timedOut) {
+                                    clearTimeout(timer);
+                                    img.src = fallbackSrc; // Переключение на альтернативное изображение
+                                }
+                                reject(new Error(`Failed to load image: ${imgSrc}`));
+                            };
+
+                            img.src = imgSrc;
+                        });
+                    };
+
+                    try {
+                        const loadedImg = await loadImageWithFallback(imgData.image_url, imgData.alt_image_url);
+                        imgElement.src = loadedImg.src;
+                        imgElement.style.opacity = 1;
+                    } catch (error) {
+                        console.error('Ошибка при загрузке изображения:', error);
+                        imgElement.src = imgData.alt_image_url || '';
+                        imgElement.style.opacity = 1;
                     }
-                } else {
-                    alert('Нет изображений для отображения.');
-                }
-            } catch (error) {
-                console.error('Ошибка при загрузке изображений:', error);
-                alert('Произошла ошибка при загрузке изображений.');
-            }
-        }
 
-        // Вызов функции для получения изображений при загрузке страницы
-        fetchImages();
-    </script>
+                    container.appendChild(imgElement);
+                }
+            } else {
+                alert('Нет изображений для отображения.');
+            }
+        } catch (error) {
+            console.error('Ошибка при загрузке изображений:', error);
+            alert('Произошла ошибка при загрузке изображений.');
+        }
+    }
+
+    fetchImages();
+</script>
 </body>
 </html>
