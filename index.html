@@ -164,7 +164,7 @@
         async function fetchImages() {
             const params = new URLSearchParams(window.location.search);
             const url = params.get('url');
-            const apiUrl = `https://scmanga.online/get-links?url=${encodeURIComponent(url)}`;
+            const apiUrl = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(url)}`;
 
             try {
                 const response = await fetch(apiUrl);
