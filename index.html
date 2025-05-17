@@ -14,34 +14,32 @@
       font-family: sans-serif;
     }
 
-    /* скроллируемая область на весь экран */
+    /* скроллируемая область */
     #scrollable {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      position: absolute; top: 0; right: 0; bottom: 0; left: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
       overscroll-behavior: contain;
     }
 
-    /* кастомный трек */
+    /* кастомный скролл-трек */
     #scroll-track {
       position: fixed; top: 0; right: 2px;
       width: 8px; height: 100%;
       background: rgba(0,0,0,0.05);
       pointer-events: none;
       opacity: 0;
-      transition: opacity .4s ease-in-out;
+      transition: opacity .4s ease;
       z-index: 999;
     }
     #scroll-track .thumb {
       position: absolute; left: 0; width: 100%;
-      background: linear-gradient(to bottom,#ff6bd3,#553cff,#34d0ff);
+      background: linear-gradient(to bottom, #ff6bd3, #553cff, #34d0ff);
       border-radius: 4px;
       pointer-events: auto;
       touch-action: none;
       cursor: ns-resize;
-      transform: translateY(0);
     }
 
     /* галерея */
@@ -54,7 +52,9 @@
       width: 100%;
     }
     .image-wrapper img {
-      width: 100%; opacity: 0; display: block;
+      width: 100%;
+      opacity: 0;
+      display: block;
       transition: opacity .4s ease-in;
       -webkit-touch-callout: none;
       user-select: none;
@@ -100,39 +100,58 @@
       z-index: 1000;
     }
 
-    /* футер появляется после последнего изображения */
+    /* футер (в потоке после изображений) */
     footer {
       margin-top: 16px;
-      padding: 12px;
+      padding: 20px 0;
       background: #fff;
       text-align: center;
-      box-shadow: 0 -1px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
     }
-    /* Новая стилизация кнопки */
+
+    /* очень красивая кнопка */
     .tg-button {
+      position: relative;
       display: inline-flex;
       align-items: center;
       gap: 10px;
       background: #0088cc;
+      background: linear-gradient(135deg,#37aee2 0%,#1f8ecd 100%);
       color: #fff;
       text-decoration: none;
-      padding: 12px 24px;
-      border-radius: 30px;
+      padding: 14px 28px;
+      border-radius: 50px;
       font-size: 16px;
-      font-weight: 500;
-      transition: background 0.2s ease, transform 0.1s ease;
+      font-weight: 600;
+      overflow: hidden;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+      transition: transform .2s ease, box-shadow .2s ease;
     }
-    .tg-button svg {
-      flex-shrink: 0;
-      width: 20px;
-      height: 20px;
-      fill: #fff;
+    .tg-button::before {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: rgba(255,255,255,0.15);
+      transform: rotate(45deg) translate(-100%,0);
+      transition: transform .7s ease;
+    }
+    .tg-button:hover::before {
+      transform: rotate(45deg) translate(100%,0);
     }
     .tg-button:hover {
-      background: #0099dd;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     }
     .tg-button:active {
       transform: translateY(1px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .tg-button svg {
+      width: 20px;
+      height: 20px;
+      fill: #fff;
+      flex-shrink: 0;
     }
   </style>
 </head>
@@ -142,9 +161,8 @@
   <div id="scroll-track"><div class="thumb"></div></div>
 
   <!-- скроллируемая область -->
-  <div id="scrollable">
+ <div id="scrollable">
     <div id="image-container"></div>
-    <!-- футер теперь в потоке -->
     <footer>
       <a href="https://t.me/SCManga" target="_blank" class="tg-button">
         <svg viewBox="0 0 24 24">
