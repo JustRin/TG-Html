@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>SCManga Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  
   <style>
     /* Сброс */
     body {
@@ -228,6 +229,16 @@
 
     fetchImages();
   </script>
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+  if (window.Telegram && Telegram.WebApp) {
+    Telegram.WebApp.ready();
+    Telegram.WebApp.disableVerticalSwipes();
+  }
+  fetchImages();
+});
+  </script>
+
 
 </body>
 </html>
