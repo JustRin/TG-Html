@@ -237,32 +237,43 @@
       }
     }
 
-    async function loadWithSpinner(img, spinner, url, tries=3){
-      for (let i=1; i<=tries; i++){
-        try {
-          await loadImage(url,6000);
-          img.src = url;
-          img.onload = ()=>{ spinner.remove(); img.style.opacity = 1; };
-          return;
-        } catch {
-          if (i===tries){
-            spinner.remove();
-            const err = document.createElement('div');
-            err.className='error'; err.textContent='Не удалось загрузить';
-            img.parentNode.append(err);
-          }
-          await new Promise(r=>setTimeout(r,500));
-        }
-      }
-    }
-    function loadImage(src, timeout=5000){
-      return new Promise((res, rej)=>{
-        const img=new Image(), t=setTimeout(()=>rej(), timeout);
-        img.onload  = ()=>{ clearTimeout(t); res(); };
-        img.onerror = ()=>{ clearTimeout(t); rej(); };
-        img.src = src;
+    async function loadWithSpinner(img, spinner, url, tries = 3) {
+  for (let i = 1; i <= tries; i++) {
+    try {
+      // 1) Достаём картинку как blob
+      const response = await fetch(url, { mode: 'cors' });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const blob = await response.blob();
+
+      // 2) Конвертируем blob в base64 через FileReader
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror   = reject;
+        reader.readAsDataURL(blob);
       });
+
+      // 3) Ставим полученный data:URL в img
+      img.src = dataUrl;
+      img.onload = () => {
+        spinner.remove();
+        img.style.opacity = 1;
+      };
+      return;
+
+    } catch (e) {
+      if (i === tries) {
+        spinner.remove();
+        const err = document.createElement("div");
+        err.className = "error";
+        err.textContent = "Не удалось загрузить";
+        img.parentNode.append(err);
+      }
+      // ждём перед повтором
+      await new Promise(r => setTimeout(r, 500));
     }
+  }
+}
 
     // Клик: навигация или индикатор
     document.addEventListener('click', e=>{
