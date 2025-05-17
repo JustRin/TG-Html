@@ -5,7 +5,7 @@
   <title>SCManga Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    /* Общие стили страницы */
+    /* Сброс отступов у body */
     body {
       margin: 0;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -15,47 +15,36 @@
       flex-direction: column;
       min-height: 100vh;
     }
-    header {
-      background: #4a90e2;
-      padding: 20px;
-      text-align: center;
-      color: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    header h1 {
-      margin: 0;
-      font-weight: normal;
-    }
 
-    /* Контейнер гридом */
+    /* Убираем padding у контейнера, делаем колонку */
     #image-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-      padding: 16px;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
       flex: 1;
     }
 
-    /* Карточка-контейнер для каждого изображения */
+    /* Обёртка для каждого изображения: без gap, без скруглений, без теней */
     .image-wrapper {
       position: relative;
-      background: white;
-      border-radius: 8px;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      background: none;
+      box-shadow: none;
+      border-radius: 0;
       overflow: hidden;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      min-height: 180px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
     .image-wrapper img {
-      max-width: 100%;
       display: block;
+      width: 100%;
       opacity: 0;
       transition: opacity 0.4s ease-in-out;
     }
 
-    /* Спиннер */
+    /* Спиннер остаётся по центру каждой обёртки */
     .image-wrapper .spinner {
       position: absolute;
       width: 40px;
@@ -64,29 +53,33 @@
       border-top-color: #4a90e2;
       border-radius: 50%;
       animation: spin 1s linear infinite;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
     }
-
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to { transform: translate(-50%, -50%) rotate(360deg); }
     }
 
-    /* Сообщение об ошибке на картинке */
+    /* Ошибка поверх картинки */
     .image-wrapper .error {
       position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       padding: 8px 12px;
       background: rgba(255,255,255,0.9);
       color: #c00;
       font-size: 14px;
-      text-align: center;
       border-radius: 4px;
+      text-align: center;
     }
 
-    /* Футер с кнопкой Telegram */
+    /* Простой футер со ссылкой в Telegram */
     footer {
       text-align: center;
-      padding: 16px;
+      padding: 12px;
       background: #fff;
-      box-shadow: 0 -1px 4px rgba(0,0,0,0.05);
     }
     .tg-button {
       display: inline-flex;
@@ -94,23 +87,23 @@
       background: #0088cc;
       color: white;
       text-decoration: none;
-      padding: 12px 20px;
-      border-radius: 24px;
-      font-size: 16px;
+      padding: 10px 18px;
+      border-radius: 20px;
+      font-size: 14px;
       transition: background 0.3s, transform 0.2s;
     }
     .tg-button:hover {
       background: #0077b3;
-      transform: translateY(-2px);
+      transform: translateY(-1px);
     }
     .tg-button svg {
-      width: 20px;
-      height: 20px;
-      margin-right: 8px;
+      width: 18px;
+      height: 18px;
+      margin-right: 6px;
       fill: white;
     }
   </style>
-    <!-- Google Tag Manager -->
+  <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
     j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
@@ -120,12 +113,8 @@
 </head>
 <body>
 
-  <header>
-    <h1>SCManga: Просмотр картинок</h1>
-  </header>
-
   <div id="image-container">
-    <!-- Картинки подгрузятся сюда -->
+    <!-- Картинки появятся здесь -->
   </div>
 
   <footer>
@@ -140,9 +129,8 @@
       const params = new URLSearchParams(window.location.search);
       const srcUrl = params.get('url');
       const apiUrl = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(srcUrl)}`;
-
       const container = document.getElementById('image-container');
-      container.innerHTML = '';  // очистим
+      container.innerHTML = '';
 
       try {
         const resp = await fetch(apiUrl);
@@ -153,20 +141,18 @@
           return;
         }
 
-        // Для каждого URL создаём обёртку
         data.forEach(({ image_url }) => {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'image-wrapper';
+          const wrap = document.createElement('div');
+          wrap.className = 'image-wrapper';
 
           const spinner = document.createElement('div');
           spinner.className = 'spinner';
-          wrapper.appendChild(spinner);
+          wrap.appendChild(spinner);
 
           const img = document.createElement('img');
-          wrapper.appendChild(img);
+          wrap.appendChild(img);
 
-          container.appendChild(wrapper);
-
+          container.appendChild(wrap);
           loadWithSpinner(img, spinner, image_url);
         });
 
@@ -185,36 +171,36 @@
             img.style.opacity = 1;
           };
           return;
-        } catch (e) {
+        } catch {
           if (i === tries) {
             spinner.remove();
-            const err = document.createElement('div');
-            err.className = 'error';
-            err.textContent = 'Не удалось загрузить';
-            img.parentNode.appendChild(err);
+            const e = document.createElement('div');
+            e.className = 'error';
+            e.textContent = 'Не удалось загрузить';
+            img.parentNode.appendChild(e);
           }
-          await new Promise(r => setTimeout(r, 1500));
+          await new Promise(r => setTimeout(r, 1000));
         }
       }
     }
 
-    function loadImage(src, timeout=5000) {
+    function loadImage(src, timeout = 5000) {
       return new Promise((res, rej) => {
         const img = new Image();
         let done = false;
         const timer = setTimeout(() => {
-          if (!done) { done = true; rej(new Error('timeout')); }
+          if (!done) { done = true; rej(); }
         }, timeout);
         img.onload = () => { if (!done) { done = true; clearTimeout(timer); res(); } };
-        img.onerror = () => { if (!done) { done = true; clearTimeout(timer); rej(new Error('error')); } };
+        img.onerror = () => { if (!done) { done = true; clearTimeout(timer); rej(); } };
         img.src = src;
       });
     }
 
-    // Стартуем
+    // Запуск
     fetchImages();
   </script>
-    <!-- Google Tag Manager (noscript) -->
+  <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M7R29TFD"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
@@ -230,4 +216,3 @@
 
 </body>
 </html>
-
