@@ -1,137 +1,115 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Манга онлайн SCManga tg: https://t.me/SCManga</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-        }
+  <meta charset="UTF-8">
+  <title>SCManga Viewer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    /* Общие стили страницы */
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background: #4a90e2;
+      padding: 20px;
+      text-align: center;
+      color: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    header h1 {
+      margin: 0;
+      font-weight: normal;
+    }
 
-        .image-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+    /* Контейнер гридом */
+    #image-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      padding: 16px;
+      flex: 1;
+    }
 
-        img {
-            max-width: 100%;
-            margin: 0px;
-            transition: opacity 0.5s ease-in-out;
-            opacity: 0;
-        }
+    /* Карточка-контейнер для каждого изображения */
+    .image-wrapper {
+      position: relative;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .image-wrapper img {
+      max-width: 100%;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.4s ease-in-out;
+    }
 
-        .loading {
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #3498db;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 2s linear infinite;
-            display: none;
-        }
+    /* Спиннер */
+    .image-wrapper .spinner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(0,0,0,0.1);
+      border-top-color: #4a90e2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
-        .error {
-            color: #ff0000;
-            font-size: 14px;
-        }
+    /* Сообщение об ошибке на картинке */
+    .image-wrapper .error {
+      position: absolute;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.9);
+      color: #c00;
+      font-size: 14px;
+      text-align: center;
+      border-radius: 4px;
+    }
 
-        /* Стили для кнопки */
-        a {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            color: #fff;
-            background: linear-gradient(45deg, #ff6b6b, #ffcc00); /* Градиентный фон */
-            padding: 12px 24px;
-            margin: 10px;
-            border-radius: 25px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Тень */
-            transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Эффект при наведении */
-        a:hover {
-            background: linear-gradient(45deg, #ff4040, #ff9900);
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        /* Эффект нажатия */
-        a:active {
-            transform: translateY(1px);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Добавляем небольшой блик */
-        a::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 50%;
-            height: 100%;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.3),
-                transparent
-            );
-            transition: 0.5s;
-        }
-
-        a:hover::before {
-            left: 100%;
-        }
-
-        /* Стили для текста внутри кнопки */
-        a span {
-            color: #fff;
-            font-weight: bold;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Тень текста */
-        }
-
-        /* Стили для иконки Telegram */
-        a .telegram-icon {
-            margin-right: 8px;
-            width: 20px;
-            height: 20px;
-            fill: #fff;
-            transition: transform 0.3s;
-        }
-
-        /* Стили для иконки сердца */
-        a .heart-icon {
-            margin-left: 8px;
-            width: 20px;
-            height: 20px;
-            fill: #fff;
-            transition: transform 0.3s;
-        }
-
-        a:hover .telegram-icon,
-        a:hover .heart-icon {
-            transform: scale(1.2);
-        }
-    </style>
+    /* Футер с кнопкой Telegram */
+    footer {
+      text-align: center;
+      padding: 16px;
+      background: #fff;
+      box-shadow: 0 -1px 4px rgba(0,0,0,0.05);
+    }
+    .tg-button {
+      display: inline-flex;
+      align-items: center;
+      background: #0088cc;
+      color: white;
+      text-decoration: none;
+      padding: 12px 20px;
+      border-radius: 24px;
+      font-size: 16px;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .tg-button:hover {
+      background: #0077b3;
+      transform: translateY(-2px);
+    }
+    .tg-button svg {
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      fill: white;
+    }
+  </style>
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -141,123 +119,101 @@
     <!-- End Google Tag Manager -->
 </head>
 <body>
-    <div id="image-container" class="image-container">
-        <h2>Загрузка изображений...</h2>
-        <div class="loading" id="loader"></div>
-        <div id="error-message" class="error" style="display: none;"></div>
-    </div>
-    <div>
-        <a href="https://t.me/SCManga" target="_blank">
-            <!-- Иконка Telegram -->
-            <svg class="telegram-icon" xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 12 12">
-                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.896 16.312c-.164.468-.508.84-.972 1.016-.618.234-1.446.178-2.282-.314l-3.72-2.212c-.37-.22-.622-.56-.73-.96l-.566-2.112c-.086-.32-.01-.66.208-.92l3.34-3.16c.316-.3.82-.284 1.12.032.3.316.284.82-.032 1.12l-3.122 2.956.468 1.74 3.38 2.008c.324.192.73.172 1.022-.05.292-.222.462-.578.466-.946l.064-5.614c.004-.404.226-.784.586-.996l3.688-1.722c.41-.192.896.042.998.472l.956 4.14c.102.44.022.902-.216 1.27l-1.656 2.252z"/>
-            </svg>
-            <span>Присоединяйся к SCManga и поддержи нас!</span>
-            <!-- Иконка сердца -->
-            <svg class="heart-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.74 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-        </a>
-    </div>
 
-    <script>
-        async function fetchImages() {
-            const params = new URLSearchParams(window.location.search);
-            const url = params.get('url');
-            const apiUrl = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(url)}`;
+  <header>
+    <h1>SCManga: Просмотр картинок</h1>
+  </header>
 
-            try {
-                const response = await fetch(apiUrl);
-                const images = await response.json();
+  <div id="image-container">
+    <!-- Картинки подгрузятся сюда -->
+  </div>
 
-                const container = document.getElementById('image-container');
-                const loader = document.getElementById('loader');
-                const errorMessage = document.getElementById('error-message');
+  <footer>
+    <a href="https://t.me/SCManga" target="_blank" class="tg-button">
+      <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.896 16.312c-.164.468-.508.84-.972 1.016-.618.234-1.446.178-2.282-.314l-3.72-2.212c-.37-.22-.622-.56-.73-.96l-.566-2.112c-.086-.32-.01-.66.208-.92l3.34-3.16c.316-.3.82-.284 1.12.032.3.316.284.82-.032 1.12l-3.122 2.956.468 1.74 3.38 2.008c.324.192.73.172 1.022-.05.292-.222.462-.578.466-.946l.064-5.614c.004-.404.226-.784.586-.996l3.688-1.722c.41-.192.896.042.998.472l.956 4.14c.102.44.022.902-.216 1.27l-1.656 2.252z"/></svg>
+      Подписаться в Telegram
+    </a>
+  </footer>
 
-                loader.style.display = 'block';
-                container.querySelector('h2').style.display = 'block';
+  <script>
+    async function fetchImages() {
+      const params = new URLSearchParams(window.location.search);
+      const srcUrl = params.get('url');
+      const apiUrl = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(srcUrl)}`;
 
-                if (Array.isArray(images) && images.length > 0) {
-                    container.innerHTML = '';
-                    container.appendChild(loader);
+      const container = document.getElementById('image-container');
+      container.innerHTML = '';  // очистим
 
-                    for (let i = 0; i < images.length; i++) {
-                        const imgData = images[i];
-                        const imgElement = document.createElement('img');
-                        imgElement.alt = 'Image';
-                        container.appendChild(imgElement);
-
-                        await loadImageWithRetry(imgElement, imgData.image_url, imgData.alt_image_url);
-                    }
-                } else {
-                    throw new Error('Нет изображений для отображения.');
-                }
-            } catch (error) {
-                console.error('Ошибка при загрузке изображений:', error);
-                const errorMessage = document.getElementById('error-message');
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = 'Произошла ошибка при загрузке изображений. Попробуйте позже.';
-            } finally {
-                loader.style.display = 'none';
-                container.querySelector('h2').style.display = 'none';
-            }
+      try {
+        const resp = await fetch(apiUrl);
+        if (!resp.ok) throw new Error(`Сервер вернул ${resp.status}`);
+        const data = await resp.json();
+        if (!Array.isArray(data) || data.length === 0) {
+          container.innerHTML = `<div class="error">Нет изображений для отображения.</div>`;
+          return;
         }
 
-        async function loadImageWithRetry(imgElement, imageUrl, fallbackUrl, maxRetries = 3, delay = 2000) {
-            const loader = document.getElementById('loader');
-            let attempt = 0;
+        // Для каждого URL создаём обёртку
+        data.forEach(({ image_url }) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'image-wrapper';
 
-            while (attempt < maxRetries) {
-                try {
-                    const loadedImg = await loadImageWithTimeout(imageUrl, fallbackUrl, 5000);
-                    imgElement.src = loadedImg.src;
-                    imgElement.style.opacity = 1;
-                    return;
-                } catch (error) {
-                    attempt++;
-                    if (attempt === maxRetries) {
-                        imgElement.src = fallbackUrl || '';
-                        imgElement.style.opacity = 1;
-                        console.error(`Failed to load image after ${maxRetries} attempts: ${error}`);
-                        return;
-                    }
-                    console.log(`Retry attempt ${attempt} for image ${imageUrl}...`);
-                    loader.style.display = 'block';
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                }
-            }
+          const spinner = document.createElement('div');
+          spinner.className = 'spinner';
+          wrapper.appendChild(spinner);
+
+          const img = document.createElement('img');
+          wrapper.appendChild(img);
+
+          container.appendChild(wrapper);
+
+          loadWithSpinner(img, spinner, image_url);
+        });
+
+      } catch (err) {
+        container.innerHTML = `<div class="error">Ошибка: ${err.message}</div>`;
+      }
+    }
+
+    async function loadWithSpinner(img, spinner, url, tries = 3) {
+      for (let i = 1; i <= tries; i++) {
+        try {
+          await loadImage(url, 6000);
+          img.src = url;
+          img.onload = () => {
+            spinner.remove();
+            img.style.opacity = 1;
+          };
+          return;
+        } catch (e) {
+          if (i === tries) {
+            spinner.remove();
+            const err = document.createElement('div');
+            err.className = 'error';
+            err.textContent = 'Не удалось загрузить';
+            img.parentNode.appendChild(err);
+          }
+          await new Promise(r => setTimeout(r, 1500));
         }
+      }
+    }
 
-        function loadImageWithTimeout(imgSrc, fallbackSrc, timeout = 5000) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                let timedOut = false;
+    function loadImage(src, timeout=5000) {
+      return new Promise((res, rej) => {
+        const img = new Image();
+        let done = false;
+        const timer = setTimeout(() => {
+          if (!done) { done = true; rej(new Error('timeout')); }
+        }, timeout);
+        img.onload = () => { if (!done) { done = true; clearTimeout(timer); res(); } };
+        img.onerror = () => { if (!done) { done = true; clearTimeout(timer); rej(new Error('error')); } };
+        img.src = src;
+      });
+    }
 
-                const timer = setTimeout(() => {
-                    timedOut = true;
-                    reject(new Error(`Timeout loading image: ${imgSrc}`));
-                }, timeout);
-
-                img.onload = () => {
-                    if (!timedOut) {
-                        clearTimeout(timer);
-                        resolve(img);
-                    }
-                };
-
-                img.onerror = () => {
-                    if (!timedOut) {
-                        clearTimeout(timer);
-                        reject(new Error(`Failed to load image: ${imgSrc}`));
-                    }
-                };
-
-                img.src = imgSrc;
-            });
-        }
-
-        fetchImages();
-    </script>
+    // Стартуем
+    fetchImages();
+  </script>
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M7R29TFD"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
@@ -271,5 +227,7 @@
 
   gtag('config', 'G-TVWL57RTT6');
 </script>
+
 </body>
 </html>
+
