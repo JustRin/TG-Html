@@ -27,6 +27,9 @@
       overscroll-behavior: contain;
       /* дополнительный отступ под «домик» iPhone */
       padding-bottom: env(safe-area-inset-bottom);
+      /* ↓ прячем родной скроллбар Safari/iOS и прочих */
+      scrollbar-width: none;
+      -ms-overflow-style: none;
     }
 
     /* кастомный скролл-трек */
