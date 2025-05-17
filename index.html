@@ -10,21 +10,24 @@
       margin: 0;
       background: #f0f2f5;
       font-family: sans-serif;
+      /* Для Firefox */
+      scrollbar-width: thin;
+      scrollbar-color: #4a90e2 transparent;
     }
 
-    /* Вертикальный прогресс-бар */
-    #scroll-progress {
-      position: fixed;
-      top: 0;
-      right: 0;
-      width: 6px;                  /* толщина полосы */
-      height: 0%;
-      background: #4a90e2;         /* яркий контрастный синий */
-      box-shadow: -2px 0 4px rgba(0,0,0,0.2);
-      z-index: 9999;
-      opacity: 0;
-      transition: height 0.1s linear, opacity 0.4s ease-in-out;
-      pointer-events: none;
+    /* Для Webkit-браузеров (Chrome, Safari, Telegram MiniApp) */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #4a90e2;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #50c7f2;
     }
 
     /* Галерея */
@@ -57,7 +60,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Ошибка загрузки */
+    /* Ошибка */
     .error {
       position: absolute;
       top: 50%; left: 50%;
@@ -113,7 +116,7 @@
       fill: white;
     }
   </style>
-      <!-- Google Tag Manager -->
+  <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
     j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
@@ -123,40 +126,34 @@
 </head>
 <body>
 
-  <!-- Вертикальный прогресс-бар -->
-  <div id="scroll-progress"></div>
-
   <!-- Галерея -->
   <div id="image-container"></div>
 
-  <!-- Индикатор номера страницы -->
+  <!-- Индикатор текущей страницы -->
   <div id="page-indicator"></div>
 
-  <!-- Подвал -->
+  <!-- Футер -->
   <footer>
     <a href="https://t.me/SCManga" target="_blank" class="tg-button">
-      <svg viewBox="0 0 24 24"><path d="M12 0C5.373 ..."/></svg>
+      <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 …"/></svg>
       Подписаться в Telegram
     </a>
   </footer>
 
   <script>
-    let wrappers = [], total = 0;
-    let progressHideTimeout, indicatorHideTimeout;
+    let wrappers = [], total = 0, indicatorHide;
 
-    // Загружаем и рендерим изображения
     async function fetchImages() {
       const src = new URLSearchParams(location.search).get('url');
       const api = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(src)}`;
       const container = document.getElementById('image-container');
       container.innerHTML = '';
       try {
-        const res = await fetch(api);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
+        const r = await fetch(api);
+        if (!r.ok) throw new Error(r.status);
+        const data = await r.json();
         if (!data.length) {
-          container.innerHTML = '<div class="error">Нет изображений</div>';
-          return;
+          return container.innerHTML = '<div class="error">Нет изображений</div>';
         }
         total = data.length;
         for (let {image_url} of data) {
@@ -169,14 +166,13 @@
           container.append(w);
           await loadWithSpinner(img, spinner, image_url);
         }
-        wrappers = Array.from(document.querySelectorAll('.image-wrapper'));
+        wrappers = Array.from(container.children);
       } catch (e) {
         container.innerHTML = `<div class="error">Ошибка: ${e.message}</div>`;
       }
     }
 
-    // Загрузка картинок с retry
-    async function loadWithSpinner(img, spinner, url, tries = 3) {
+    async function loadWithSpinner(img, spinner, url, tries=3) {
       for (let i=1; i<=tries; i++) {
         try {
           await loadImage(url, 6000);
@@ -194,47 +190,22 @@
             err.textContent = 'Не удалось загрузить';
             img.parentNode.append(err);
           }
-          await new Promise(r => setTimeout(r, 500));
+          await new Promise(r=>setTimeout(r,500));
         }
       }
     }
 
-    // Promise-обёртка для Image
     function loadImage(src, timeout=5000) {
       return new Promise((res, rej) => {
-        const img = new Image(), t = setTimeout(() => rej(), timeout);
-        img.onload = () => { clearTimeout(t); res(); };
-        img.onerror = () => { clearTimeout(t); rej(); };
+        const img = new Image(), t = setTimeout(()=>rej(), timeout);
+        img.onload  = ()=>{ clearTimeout(t); res(); };
+        img.onerror = ()=>{ clearTimeout(t); rej(); };
         img.src = src;
       });
     }
 
-    // При скролле обновляем и показываем прогресс-бар
-    window.addEventListener('scroll', () => {
-      updateProgressBar();
-      showProgressBar();
-    });
-
-    // Обновить высоту полосы
-    function updateProgressBar() {
-      const prog = document.getElementById('scroll-progress');
-      const scrollTop = window.scrollY;
-      const docHeight = document.body.scrollHeight - window.innerHeight;
-      const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-      prog.style.height = pct + '%';
-    }
-
-    // Показать и скрыть прогресс-бар
-    function showProgressBar() {
-      const prog = document.getElementById('scroll-progress');
-      prog.style.opacity = 1;
-      clearTimeout(progressHideTimeout);
-      progressHideTimeout = setTimeout(() => prog.style.opacity = 0, 800);
-    }
-
-    // Клик для навигации и показа номера страницы
     document.addEventListener('click', e => {
-      if (e.detail === 0) return;  // пропустить drag/scroll
+      if (e.detail === 0) return;
       const y = e.clientY, h = window.innerHeight;
       if (y < h/3) {
         window.scrollBy({ top: -h*0.8, behavior: 'smooth' });
@@ -245,18 +216,16 @@
       }
     });
 
-    // Показ индикатора «текущая/всего»
     function showPageIndicator() {
       const ind = document.getElementById('page-indicator');
       ind.textContent = `${currentIndex()}/${total}`;
       ind.style.opacity = 1;
-      clearTimeout(indicatorHideTimeout);
-      indicatorHideTimeout = setTimeout(() => ind.style.opacity = 0, 1200);
+      clearTimeout(indicatorHide);
+      indicatorHide = setTimeout(() => ind.style.opacity = 0, 1200);
     }
 
-    // Вычисление, какая картинка по центру экрана
     function currentIndex() {
-      const mid = window.innerHeight / 2;
+      const mid = window.innerHeight/2;
       for (let i=0; i<wrappers.length; i++) {
         const r = wrappers[i].getBoundingClientRect();
         if (r.top <= mid && r.bottom >= mid) return i+1;
@@ -264,7 +233,6 @@
       return 1;
     }
 
-    // Старт
     fetchImages();
   </script>
   <!-- Google Tag Manager (noscript) -->
