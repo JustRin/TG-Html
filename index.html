@@ -4,150 +4,169 @@
   <meta charset="UTF-8">
   <title>SCManga Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  
   <style>
-    /* Сброс */
+    /* общий сброс */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      margin: 0;
       background: #f0f2f5;
       font-family: sans-serif;
-      /* Для Firefox */
-      scrollbar-width: thin;
-      scrollbar-color: #4a90e2 transparent;
+      position: relative; /* для вложенного трека */
     }
 
-    /* Для Webkit-браузеров (Chrome, Safari, Telegram MiniApp) */
-    ::-webkit-scrollbar {
-      width: 6px;
+    /* Скролл-трек справа */
+    #scroll-track {
+      position: fixed;
+      top: 0; right: 0;
+      width: 8px;
+      height: 100%;
+      background: rgba(0,0,0,0.05);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease-in-out;
+      z-index: 999;
     }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #4a90e2;
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #50c7f2;
+    /* Градиентный ползунок */
+    #scroll-track .thumb {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      background: linear-gradient(to bottom, #ff6bd3, #553cff, #34d0ff);
+      border-radius: 4px;
     }
 
     /* Галерея */
     #image-container {
       display: flex;
       flex-direction: column;
-      align-items: stretch;
     }
     .image-wrapper {
       position: relative;
       width: 100%;
     }
     .image-wrapper img {
-      display: block;
       width: 100%;
       opacity: 0;
       transition: opacity .4s ease-in;
+      display: block;
     }
 
     /* Спиннер */
     .spinner {
       position: absolute;
-      top: 50%; left: 50%;
-      width: 40px; height: 40px;
-      margin: -20px 0 0 -20px;
-      border: 4px solid rgba(0,0,0,0.1);
-      border-top-color: #4a90e2;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+      top:50%; left:50%;
+      width:40px; height:40px;
+      margin:-20px 0 0 -20px;
+      border:4px solid rgba(0,0,0,0.1);
+      border-top-color:#4a90e2;
+      border-radius:50%;
+      animation:spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     /* Ошибка */
     .error {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
+      position:absolute;
+      top:50%; left:50%;
+      transform: translate(-50%,-50%);
       background: rgba(255,255,255,0.9);
-      color: #c00;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 14px;
-      text-align: center;
+      color:#c00; padding:4px 8px;
+      border-radius:4px; font-size:14px;
+      text-align:center;
     }
 
     /* Индикатор страницы */
     #page-indicator {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
+      position:fixed; bottom:20px; left:50%;
       transform: translateX(-50%);
-      background: rgba(0,0,0,0.6);
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 12px;
-      font-size: 14px;
-      opacity: 0;
+      background: rgba(0,0,0,0.6); color:#fff;
+      padding:6px 12px; border-radius:12px;
+      font-size:14px; opacity:0;
       transition: opacity .3s ease-in-out;
       pointer-events: none;
+      z-index:1000;
     }
 
     /* Футер */
     footer {
-      text-align: center;
-      padding: 12px;
-      background: #fff;
+      text-align:center; padding:12px; background:#fff;
     }
     .tg-button {
-      display: inline-flex;
-      align-items: center;
-      background: #0088cc;
-      color: white;
-      text-decoration: none;
-      padding: 10px 18px;
-      border-radius: 20px;
-      font-size: 14px;
-      transition: background 0.3s, transform 0.2s;
+      display:inline-flex; align-items:center;
+      background:#0088cc; color:#fff;
+      text-decoration:none; padding:10px 18px;
+      border-radius:20px; font-size:14px;
+      transition: background .3s, transform .2s;
     }
     .tg-button:hover {
-      background: #0077b3;
-      transform: translateY(-1px);
+      background:#0077b3; transform:translateY(-1px);
     }
     .tg-button svg {
-      width: 18px; height: 18px;
-      margin-right: 6px;
-      fill: white;
+      width:18px; height:18px; margin-right:6px; fill:#fff;
     }
   </style>
 </head>
 <body>
 
+  <!-- Кастомный трек и ползунок -->
+  <div id="scroll-track">
+    <div class="thumb"></div>
+  </div>
+
   <!-- Галерея -->
   <div id="image-container"></div>
 
-  <!-- Индикатор текущей страницы -->
+  <!-- Номер страницы -->
   <div id="page-indicator"></div>
 
   <!-- Футер -->
   <footer>
     <a href="https://t.me/SCManga" target="_blank" class="tg-button">
-      <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 …"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z
+                 m5.896 16.312c-.164.468-.508.84-.972 1.016-.618.234-1.446.178-2.282-.314
+                 l-3.72-2.212c-.37-.22-.622-.56-.73-.96l-.566-2.112c-.086-.32-.01-.66.208-.92
+                 l3.34-3.16c.316-.3.82-.284 1.12.032.3.316.284.82-.032 1.12l-3.122 2.956
+                 .468 1.74 3.38 2.008c.324.192.73.172 1.022-.05.292-.222.462-.578.466-.946
+                 l.064-5.614c.004-.404.226-.784.586-.996l3.688-1.722c.41-.192.896.042.998.472
+                 l.956 4.14c.102.44.022.902-.216 1.27l-1.656 2.252z"/>
+      </svg>
       Подписаться в Telegram
     </a>
   </footer>
 
   <script>
-    let wrappers = [], total = 0, indicatorHide;
+    let wrappers = [], total = 0;
+    let trackHideTimeout, indicatorHideTimeout;
 
+    // Заглушка для браузера
+    if (!window.Telegram) {
+      window.Telegram = {
+        WebApp: { ready: ()=>{}, disableVerticalSwipes: ()=>{} }
+      };
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Отключаем вертикальные скроллы Telegram
+      if (Telegram.WebApp) {
+        Telegram.WebApp.ready();
+        Telegram.WebApp.disableVerticalSwipes();
+      }
+      fetchImages();
+    });
+
+    // Загрузка ссылок и рендер
     async function fetchImages() {
       const src = new URLSearchParams(location.search).get('url');
       const api = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(src)}`;
       const container = document.getElementById('image-container');
       container.innerHTML = '';
       try {
-        const r = await fetch(api);
-        if (!r.ok) throw new Error(r.status);
-        const data = await r.json();
+        const res = await fetch(api);
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
         if (!data.length) {
-          return container.innerHTML = '<div class="error">Нет изображений</div>';
+          container.innerHTML = '<div class="error">Нет изображений</div>';
+          return;
         }
         total = data.length;
         for (let {image_url} of data) {
@@ -160,12 +179,15 @@
           container.append(w);
           await loadWithSpinner(img, spinner, image_url);
         }
-        wrappers = Array.from(container.children);
+        wrappers = Array.from(document.querySelectorAll('.image-wrapper'));
+        // сразу обновим ползунок
+        updateThumb();
       } catch (e) {
         container.innerHTML = `<div class="error">Ошибка: ${e.message}</div>`;
       }
     }
 
+    // Загрузка с retry
     async function loadWithSpinner(img, spinner, url, tries=3) {
       for (let i=1; i<=tries; i++) {
         try {
@@ -177,7 +199,7 @@
           };
           return;
         } catch {
-          if (i === tries) {
+          if (i===tries) {
             spinner.remove();
             const err = document.createElement('div');
             err.className = 'error';
@@ -189,6 +211,7 @@
       }
     }
 
+    // Promise-обёртка для Image
     function loadImage(src, timeout=5000) {
       return new Promise((res, rej) => {
         const img = new Image(), t = setTimeout(()=>rej(), timeout);
@@ -198,24 +221,50 @@
       });
     }
 
+    // Обновляем положение и размер ползунка
+    function updateThumb() {
+      const track = document.getElementById('scroll-track'),
+            thumb = track.querySelector('.thumb'),
+            viewH = window.innerHeight,
+            docH  = document.body.scrollHeight,
+            trackH = track.clientHeight;
+
+      // высота ползунка пропорциональна видимой части
+      const ratio = viewH / docH,
+            thumbH = Math.max(ratio * trackH, 20);
+      thumb.style.height = thumbH + 'px';
+
+      // положение ползунка
+      const scrollY = window.scrollY,
+            maxY = docH - viewH,
+            top    = maxY>0 ? (scrollY/maxY)*(trackH - thumbH) : 0;
+      thumb.style.transform = `translateY(${top}px)`;
+    }
+
+    // Показываем и скрываем трек
+    window.addEventListener('scroll', () => {
+      updateThumb();
+      const track = document.getElementById('scroll-track');
+      track.style.opacity = 1;
+      clearTimeout(trackHideTimeout);
+      trackHideTimeout = setTimeout(()=> track.style.opacity = 0, 800);
+    });
+
+    // Клики для навигации и индикатор страницы
     document.addEventListener('click', e => {
-      if (e.detail === 0) return;
+      if (e.detail===0) return;
       const y = e.clientY, h = window.innerHeight;
-      if (y < h/3) {
-        window.scrollBy({ top: -h*0.8, behavior: 'smooth' });
-      } else if (y > h*2/3) {
-        window.scrollBy({ top: h*0.8, behavior: 'smooth' });
-      } else {
-        showPageIndicator();
-      }
+      if (y < h/3)      window.scrollBy({top: -h*0.8, behavior:'smooth'});
+      else if (y > 2*h/3) window.scrollBy({top:  h*0.8, behavior:'smooth'});
+      else                showPageIndicator();
     });
 
     function showPageIndicator() {
       const ind = document.getElementById('page-indicator');
       ind.textContent = `${currentIndex()}/${total}`;
       ind.style.opacity = 1;
-      clearTimeout(indicatorHide);
-      indicatorHide = setTimeout(() => ind.style.opacity = 0, 1200);
+      clearTimeout(indicatorHideTimeout);
+      indicatorHideTimeout = setTimeout(()=> ind.style.opacity = 0, 1200);
     }
 
     function currentIndex() {
@@ -226,29 +275,7 @@
       }
       return 1;
     }
-    // Заглушка для разработки в браузере
-    if (!window.Telegram) {
-      window.Telegram = {
-        WebApp: {
-          ready: () => console.log('WebApp.ready() заглушка'),
-          disableVerticalSwipes: () => console.log('disableVerticalSwipes() заглушка')
-        }
-      };
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      // Если запущено из Telegram — инициируем WebApp API
-      if (Telegram.WebApp) {
-        Telegram.WebApp.ready();
-        Telegram.WebApp.disableVerticalSwipes();
-      }
-
-      // Остальной ваш код — загрузка картинок, обработчики кликов и т.д.
-      fetchImages();
-    });
   </script>
-
-
 
 </body>
 </html>
