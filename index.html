@@ -5,45 +5,47 @@
   <title>SCManga Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    /* 1) Прячем нативный скролл окна */
+    /* сброс */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       height: 100%;
-      margin: 0;
       overflow: hidden;
       background: #f0f2f5;
       font-family: sans-serif;
     }
 
-    /* 2) Наш скроллируемый контейнер */
+    /* скроллируемая область */
     #scrollable {
       position: absolute;
-      top: 0; right: 0; bottom: 0; left: 0;
+      top: 0; left: 0; right: 0; bottom: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
 
-    /* 3) Кастомный трек и “ползунок” */
+    /* кастомный трек */
     #scroll-track {
       position: fixed;
       top: 0; right: 2px;
-      width: 6px;
-      height: 100%;
+      width: 8px; height: 100%;
       background: rgba(0,0,0,0.05);
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.4s ease-in-out;
+      transition: opacity .4s ease-in-out;
       z-index: 999;
     }
+    /* ползунок */
     #scroll-track .thumb {
-      position: absolute;
-      left: 0;
+      position: absolute; left: 0;
       width: 100%;
       background: linear-gradient(to bottom, #ff6bd3, #553cff, #34d0ff);
-      border-radius: 3px;
+      border-radius: 4px;
+      pointer-events: auto;
+      touch-action: none;
+      cursor: ns-resize;
       transform: translateY(0);
     }
 
-    /* 4) Галерея картинок */
+    /* галерея */
     #image-container {
       display: flex;
       flex-direction: column;
@@ -59,7 +61,7 @@
       display: block;
     }
 
-    /* Спиннер */
+    /* спиннер */
     .spinner {
       position: absolute;
       top:50%; left:50%;
@@ -70,20 +72,22 @@
       border-radius:50%;
       animation:spin 1s linear infinite;
     }
-    @keyframes spin { to{ transform:rotate(360deg); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Ошибка */
+    /* ошибка */
     .error {
       position:absolute;
       top:50%; left:50%;
       transform:translate(-50%,-50%);
       background:rgba(255,255,255,0.9);
-      color:#c00; padding:4px 8px;
-      border-radius:4px; font-size:14px;
+      color:#c00;
+      padding:4px 8px;
+      border-radius:4px;
+      font-size:14px;
       text-align:center;
     }
 
-    /* Индикатор страницы */
+    /* индикатор страницы */
     #page-indicator {
       position: fixed;
       bottom: 20px; left: 50%;
@@ -99,7 +103,7 @@
       z-index: 1000;
     }
 
-    /* Футер */
+    /* футер */
     footer {
       text-align: center;
       padding: 12px;
@@ -121,44 +125,43 @@
       transform: translateY(-1px);
     }
     .tg-button svg {
-      width: 18px; height: 18px;
-      margin-right: 6px;
-      fill: white;
+      width:18px; height:18px; margin-right:6px; fill:white;
     }
   </style>
 </head>
 <body>
 
-  <!-- Кастомный трек -->
-  <div id="scroll-track"><div class="thumb"></div></div>
+  <!-- кастомный трек и ползунок -->
+  <div id="scroll-track">
+    <div class="thumb"></div>
+  </div>
 
-  <!-- Наш скроллируемый контейнер -->
+  <!-- скроллируемая область -->
   <div id="scrollable">
     <div id="image-container"></div>
   </div>
 
-  <!-- Номер страницы -->
+  <!-- индикатор страницы -->
   <div id="page-indicator"></div>
 
-  <!-- Футер -->
+  <!-- футер -->
   <footer>
     <a href="https://t.me/SCManga" target="_blank" class="tg-button">
-      <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 …"/></svg>
+      <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 ..."/></svg>
       Подписаться в Telegram
     </a>
   </footer>
 
   <script>
     let wrappers = [], total = 0;
-    let trackHide, indicatorHide;
+    let trackHideTimeout, indicatorHideTimeout;
 
-    // Заглушка для браузера
+    // заглушка для браузера
     if (!window.Telegram) {
       window.Telegram = { WebApp: { ready: ()=>{}, disableVerticalSwipes: ()=>{} } };
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Отключаем свайпы, если WebApp
       if (Telegram.WebApp) {
         Telegram.WebApp.ready();
         Telegram.WebApp.disableVerticalSwipes();
@@ -170,12 +173,7 @@
     const track      = document.getElementById('scroll-track');
     const thumb      = track.querySelector('.thumb');
 
-    // 1) Ловим scroll на нашем контейнере
-    scrollable.addEventListener('scroll', () => {
-      updateThumb();
-      showTrack();
-    });
-
+    // обновляем положение/размер ползунка
     function updateThumb() {
       const viewH  = scrollable.clientHeight;
       const docH   = scrollable.scrollHeight;
@@ -183,28 +181,58 @@
       const ratio  = viewH / docH;
       const thumbH = Math.max(ratio * trackH, 20);
       thumb.style.height = thumbH + 'px';
-
-      const maxScroll = docH - viewH;
+      const maxScroll   = docH - viewH;
+      const maxThumbMov = trackH - thumbH;
       const top = maxScroll > 0
-        ? (scrollable.scrollTop / maxScroll) * (trackH - thumbH)
+        ? (scrollable.scrollTop / maxScroll) * maxThumbMov
         : 0;
       thumb.style.transform = `translateY(${top}px)`;
     }
 
-    function showTrack() {
+    // показываем трек
+    scrollable.addEventListener('scroll', () => {
+      updateThumb();
       track.style.opacity = 1;
-      clearTimeout(trackHide);
-      trackHide = setTimeout(()=> track.style.opacity = 0, 800);
-    }
+      clearTimeout(trackHideTimeout);
+      trackHideTimeout = setTimeout(() => track.style.opacity = 0, 800);
+    });
 
-    // 2) Загрузка и рендер картинок
+    // делаем thumb перетаскиваемым
+    ;(function(){
+      let dragging = false, startY = 0, startScroll = 0;
+      thumb.addEventListener('pointerdown', e => {
+        dragging = true;
+        startY = e.clientY;
+        startScroll = scrollable.scrollTop;
+        document.body.style.userSelect = 'none';
+      });
+      document.addEventListener('pointermove', e => {
+        if (!dragging) return;
+        const dy = e.clientY - startY;
+        const viewH  = scrollable.clientHeight;
+        const docH   = scrollable.scrollHeight;
+        const trackH = track.clientHeight;
+        const thumbH = thumb.clientHeight;
+        const maxScroll    = docH - viewH;
+        const maxThumbMove = trackH - thumbH;
+        const scrollDelta  = dy * (maxScroll / maxThumbMove);
+        scrollable.scrollTop = Math.min(Math.max(startScroll + scrollDelta, 0), maxScroll);
+      });
+      document.addEventListener('pointerup', () => {
+        if (!dragging) return;
+        dragging = false;
+        document.body.style.userSelect = '';
+      });
+    })();
+
+    // загрузка и рендер
     async function fetchImages() {
       const src = new URLSearchParams(location.search).get('url');
       const api = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(src)}`;
-      const c   = document.getElementById('image-container');
+      const c = document.getElementById('image-container');
       c.innerHTML = '';
       try {
-        const res  = await fetch(api);
+        const res = await fetch(api);
         const data = await res.json();
         total = data.length;
         for (let {image_url} of data) {
@@ -218,13 +246,13 @@
           await loadWithSpinner(img, s, image_url);
         }
         wrappers = Array.from(c.children);
-        updateThumb();  // после полной отрисовки
+        updateThumb();
       } catch (e) {
         c.innerHTML = `<div class="error">Ошибка: ${e.message}</div>`;
       }
     }
 
-    // 3) Спиннер + retry
+    // спиннер + retry
     async function loadWithSpinner(img, spinner, url, tries=3) {
       for (let i=1; i<=tries; i++) {
         try {
@@ -253,22 +281,23 @@
       });
     }
 
-    // 4) Клики: навигация + индикатор страницы
+    // клики: навигация и индикатор страницы
     document.addEventListener('click', e => {
       if (e.detail === 0) return;
-      const y = e.clientY - scrollable.getBoundingClientRect().top;
+      const rect = scrollable.getBoundingClientRect();
+      const y = e.clientY - rect.top;
       const h = scrollable.clientHeight;
       if (y < h/3)      scrollable.scrollBy({ top:-h*0.8, behavior:'smooth' });
       else if (y>2*h/3) scrollable.scrollBy({ top: h*0.8, behavior:'smooth' });
-      else              showPageIndicator();
+      else               showPageIndicator();
     });
 
     function showPageIndicator() {
       const ind = document.getElementById('page-indicator');
       ind.textContent = `${currentIndex()}/${total}`;
       ind.style.opacity = 1;
-      clearTimeout(indicatorHide);
-      indicatorHide = setTimeout(()=> ind.style.opacity = 0, 1200);
+      clearTimeout(indicatorHideTimeout);
+      indicatorHideTimeout = setTimeout(() => ind.style.opacity = 0, 1200);
     }
 
     function currentIndex() {
@@ -280,6 +309,5 @@
       return 1;
     }
   </script>
-
 </body>
 </html>
