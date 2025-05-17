@@ -5,77 +5,63 @@
   <title>SCManga Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    /* Сброс отступов у body */
     body {
       margin: 0;
-      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       background: #f0f2f5;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
+      font-family: sans-serif;
     }
-
-    /* Убираем padding у контейнера, делаем колонку */
     #image-container {
-      margin: 0;
-      padding: 0;
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      flex: 1;
     }
-
-    /* Обёртка для каждого изображения: без gap, без скруглений, без теней */
     .image-wrapper {
       position: relative;
       width: 100%;
-      margin: 0;
-      padding: 0;
-      background: none;
-      box-shadow: none;
-      border-radius: 0;
-      overflow: hidden;
     }
     .image-wrapper img {
       display: block;
       width: 100%;
       opacity: 0;
-      transition: opacity 0.4s ease-in-out;
+      transition: opacity .4s ease-in;
     }
-
-    /* Спиннер остаётся по центру каждой обёртки */
-    .image-wrapper .spinner {
+    .spinner {
       position: absolute;
+      top: 50%;
+      left: 50%;
       width: 40px;
       height: 40px;
+      margin: -20px 0 0 -20px;
       border: 4px solid rgba(0,0,0,0.1);
       border-top-color: #4a90e2;
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
     }
-    @keyframes spin {
-      to { transform: translate(-50%, -50%) rotate(360deg); }
-    }
-
-    /* Ошибка поверх картинки */
-    .image-wrapper .error {
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      padding: 8px 12px;
-      background: rgba(255,255,255,0.9);
-      color: #c00;
-      font-size: 14px;
-      border-radius: 4px;
-      text-align: center;
+      top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      background:rgba(255,255,255,0.9);
+      color:#c00;
+      padding:4px 8px;
+      border-radius:4px;
+      font-size:14px;
     }
-
-    /* Простой футер со ссылкой в Telegram */
+    #page-indicator {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity .3s ease-in-out;
+      pointer-events: none;
+    }
     footer {
       text-align: center;
       padding: 12px;
@@ -97,13 +83,12 @@
       transform: translateY(-1px);
     }
     .tg-button svg {
-      width: 18px;
-      height: 18px;
+      width: 18px; height: 18px;
       margin-right: 6px;
       fill: white;
     }
   </style>
-  <!-- Google Tag Manager -->
+   <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
     j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
@@ -113,9 +98,8 @@
 </head>
 <body>
 
-  <div id="image-container">
-    <!-- Картинки появятся здесь -->
-  </div>
+  <div id="image-container"></div>
+  <div id="page-indicator"></div>
 
   <footer>
     <a href="https://t.me/SCManga" target="_blank" class="tg-button">
@@ -125,44 +109,44 @@
   </footer>
 
   <script>
+    let wrappers = [];
+    let total = 0;
+
     async function fetchImages() {
-      const params = new URLSearchParams(window.location.search);
-      const srcUrl = params.get('url');
-      const apiUrl = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(srcUrl)}`;
+      const params = new URLSearchParams(location.search);
+      const src = params.get('url');
+      const api = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(src)}`;
       const container = document.getElementById('image-container');
       container.innerHTML = '';
 
       try {
-        const resp = await fetch(apiUrl);
-        if (!resp.ok) throw new Error(`Сервер вернул ${resp.status}`);
-        const data = await resp.json();
-        if (!Array.isArray(data) || data.length === 0) {
-          container.innerHTML = `<div class="error">Нет изображений для отображения.</div>`;
+        const r = await fetch(api);
+        if (!r.ok) throw new Error(r.status);
+        const data = await r.json();
+        if (!data.length) {
+          container.innerHTML = '<div class="error">Нет изображений</div>';
           return;
         }
-
-        data.forEach(({ image_url }) => {
-          const wrap = document.createElement('div');
-          wrap.className = 'image-wrapper';
-
-          const spinner = document.createElement('div');
-          spinner.className = 'spinner';
-          wrap.appendChild(spinner);
-
+        total = data.length;
+        data.forEach(({image_url}) => {
+          const w = document.createElement('div');
+          w.className = 'image-wrapper';
+          const s = document.createElement('div');
+          s.className = 'spinner';
           const img = document.createElement('img');
-          wrap.appendChild(img);
-
-          container.appendChild(wrap);
-          loadWithSpinner(img, spinner, image_url);
+          w.appendChild(s);
+          w.appendChild(img);
+          container.appendChild(w);
+          loadWithSpinner(img, s, image_url);
         });
-
-      } catch (err) {
-        container.innerHTML = `<div class="error">Ошибка: ${err.message}</div>`;
+        wrappers = Array.from(document.querySelectorAll('.image-wrapper'));
+      } catch (e) {
+        container.innerHTML = `<div class="error">Ошибка: ${e.message}</div>`;
       }
     }
 
-    async function loadWithSpinner(img, spinner, url, tries = 3) {
-      for (let i = 1; i <= tries; i++) {
+    async function loadWithSpinner(img, spinner, url, tries=3) {
+      for (let i=1; i<=tries; i++) {
         try {
           await loadImage(url, 6000);
           img.src = url;
@@ -172,33 +156,68 @@
           };
           return;
         } catch {
-          if (i === tries) {
+          if (i===tries) {
             spinner.remove();
             const e = document.createElement('div');
-            e.className = 'error';
-            e.textContent = 'Не удалось загрузить';
+            e.className='error';
+            e.textContent='Не удалось загрузить';
             img.parentNode.appendChild(e);
           }
-          await new Promise(r => setTimeout(r, 1000));
+          await new Promise(r=>setTimeout(r,500));
         }
       }
     }
 
-    function loadImage(src, timeout = 5000) {
+    function loadImage(src, timeout=5000) {
       return new Promise((res, rej) => {
         const img = new Image();
         let done = false;
-        const timer = setTimeout(() => {
-          if (!done) { done = true; rej(); }
-        }, timeout);
-        img.onload = () => { if (!done) { done = true; clearTimeout(timer); res(); } };
-        img.onerror = () => { if (!done) { done = true; clearTimeout(timer); rej(); } };
+        const t = setTimeout(() => { if (!done) { done=true; rej(); } }, timeout);
+        img.onload  = () => { if (!done) { done=true; clearTimeout(t); res(); } };
+        img.onerror = () => { if (!done) { done=true; clearTimeout(t); rej(); } };
         img.src = src;
       });
     }
 
-    // Запуск
+    document.addEventListener('click', e => {
+      // e.detail===0 — это скролл/drag, игнорируем
+      if (e.detail === 0) return;
+
+      const y = e.clientY;
+      const h = window.innerHeight;
+      const topZone = h/3, botZone = 2*h/3;
+
+      if (y < topZone) {
+        window.scrollBy({ top: -h*0.8, behavior: 'smooth' });
+      } else if (y > botZone) {
+        window.scrollBy({ top: h*0.8, behavior: 'smooth' });
+      } else {
+        showPageIndicator();
+      }
+    });
+
+    function showPageIndicator() {
+      const ind = document.getElementById('page-indicator');
+      const idx = currentIndex();
+      ind.textContent = `${idx}/${total}`;
+      ind.style.opacity = 1;
+      clearTimeout(ind.hideTimeout);
+      ind.hideTimeout = setTimeout(() => ind.style.opacity = 0, 1500);
+    }
+
+    function currentIndex() {
+      const mid = window.innerHeight / 2;
+      for (let i = 0; i < wrappers.length; i++) {
+        const r = wrappers[i].getBoundingClientRect();
+        if (r.top <= mid && r.bottom >= mid) {
+          return i + 1;
+        }
+      }
+      return wrappers[0].getBoundingClientRect().top > mid ? 1 : wrappers.length;
+    }
+
     fetchImages();
+  </script>
   </script>
   <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M7R29TFD"
