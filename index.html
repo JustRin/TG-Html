@@ -108,18 +108,31 @@
       text-align: center;
       box-shadow: 0 -1px 4px rgba(0,0,0,0.1);
     }
+    /* Новая стилизация кнопки */
     .tg-button {
-      display: inline-flex; align-items: center;
-      background: #0088cc; color: #fff;
-      text-decoration: none; padding: 10px 18px;
-      border-radius: 20px; font-size: 14px;
-      transition: background .3s, transform .2s;
-    }
-    .tg-button:hover {
-      background: #0077b3; transform: translateY(-1px);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #0088cc;
+      color: #fff;
+      text-decoration: none;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 16px;
+      font-weight: 500;
+      transition: background 0.2s ease, transform 0.1s ease;
     }
     .tg-button svg {
-      width: 18px; height: 18px; margin-right: 6px; fill: #fff;
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      fill: #fff;
+    }
+    .tg-button:hover {
+      background: #0099dd;
+    }
+    .tg-button:active {
+      transform: translateY(1px);
     }
   </style>
 </head>
@@ -135,19 +148,22 @@
     <footer>
       <a href="https://t.me/SCManga" target="_blank" class="tg-button">
         <svg viewBox="0 0 24 24">
-          <path d="M12 0C5.373 0 0 5.373 0 12c0 6.627 5.373 12 12 12
-                   s12-5.373 12-12C24 5.373 18.627 0 12 0zm5.896 16.312
-                   c-.164.468-.508.84-.972 1.016-.618.234-1.446.178-2.282
-                   -.314l-3.72-2.212c-.37-.22-.622-.56-.73-.96l-.566
-                   -2.112c-.086-.32-.01-.66.208-.92l3.34-3.16c.316
-                   -.3.82-.284 1.12.032.3.316.284.82-.032 1.12l-3.122
-                   2.956.468 1.74 3.38 2.008c.324.192.73.172 1.022
-                   -.05.292-.222.462-.578.466-.946l.064-5.614c.004
-                   -.404.226-.784.586-.996l3.688-1.722c.41-.192.896
-                   .042.998.472l.956 4.14c.102.44.022.902-.216
-                   1.27l-1.656 2.252z"/>
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12
+                   12-5.373 12-12S18.627 0 12 0zm5.896 16.312
+                   c-.164.468-.508.84-.972 1.016-.618.234
+                   -1.446.178-2.282-.314l-3.72-2.212c-.37
+                   -.22-.622-.56-.73-.96l-.566-2.112c-.086
+                   -.32-.01-.66.208-.92l3.34-3.16c.316-.3
+                   .82-.284 1.12.032.3.316.284.82-.032
+                   1.12l-3.122 2.956.468 1.74 3.38
+                   2.008c.324.192.73.172 1.022-.05.292
+                   -.222.462-.578.466-.946l.064-5.614
+                   c.004-.404.226-.784.586-.996l3.688
+                   -1.722c.41-.192.896.042.998.472l.956
+                   4.14c.102.44.022.902-.216 1.27l
+                   -1.656 2.252z"/>
         </svg>
-        Подписаться в Telegram
+        Подпишись на нас в Телеграм,<br>будь в курсе последних глав!
       </a>
     </footer>
   </div>
