@@ -5,15 +5,30 @@
   <title>SCManga Viewer</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
+    /* Сброс отступов */
     body {
       margin: 0;
       background: #f0f2f5;
       font-family: sans-serif;
     }
+
+    /* Прогресс-бар прокрутки */
+    #scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 0%;
+      height: 4px;
+      background: linear-gradient(90deg, #4a90e2, #50c7f2);
+      z-index: 9999;
+      transition: width 0.1s ease-out;
+    }
+
+    /* Контейнер изображений */
     #image-container {
+      margin-top: 4px; /* отступ под прогресс-бар */
       display: flex;
       flex-direction: column;
-      align-items: stretch;
     }
     .image-wrapper {
       position: relative;
@@ -25,6 +40,8 @@
       opacity: 0;
       transition: opacity .4s ease-in;
     }
+
+    /* Спиннер */
     .spinner {
       position: absolute;
       top: 50%;
@@ -38,22 +55,26 @@
       animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Ошибка при загрузке */
     .error {
       position: absolute;
-      top:50%; left:50%;
-      transform:translate(-50%,-50%);
-      background:rgba(255,255,255,0.9);
-      color:#c00;
-      padding:4px 8px;
-      border-radius:4px;
-      font-size:14px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255,255,255,0.9);
+      color: #c00;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 14px;
     }
+
+    /* Индикатор страницы (число) */
     #page-indicator {
       position: fixed;
       bottom: 20px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.6);
+      background: rgba(0,0,0,0.6);
       color: #fff;
       padding: 6px 12px;
       border-radius: 12px;
@@ -62,6 +83,8 @@
       transition: opacity .3s ease-in-out;
       pointer-events: none;
     }
+
+    /* Подвал с кнопкой Telegram */
     footer {
       text-align: center;
       padding: 12px;
@@ -88,7 +111,7 @@
       fill: white;
     }
   </style>
-   <!-- Google Tag Manager -->
+  <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
     j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
@@ -98,12 +121,21 @@
 </head>
 <body>
 
+  <!-- Прогресс-бар -->
+  <div id="scroll-progress"></div>
+
+  <!-- Галерея -->
   <div id="image-container"></div>
+
+  <!-- Индикатор страницы -->
   <div id="page-indicator"></div>
 
+  <!-- Футер -->
   <footer>
     <a href="https://t.me/SCManga" target="_blank" class="tg-button">
-      <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.896 16.312c-.164.468-.508.84-.972 1.016-.618.234-1.446.178-2.282-.314l-3.72-2.212c-.37-.22-.622-.56-.73-.96l-.566-2.112c-.086-.32-.01-.66.208-.92l3.34-3.16c.316-.3.82-.284 1.12.032.3.316.284.82-.032 1.12l-3.122 2.956.468 1.74 3.38 2.008c.324.192.73.172 1.022-.05.292-.222.462-.578.466-.946l.064-5.614c.004-.404.226-.784.586-.996l3.688-1.722c.41-.192.896.042.998.472l.956 4.14c.102.44.022.902-.216 1.27l-1.656 2.252z"/></svg>
+      <svg viewBox="0 0 24 24">
+        <path d="M12 0C5.373 0 0 5.373 0 12 ..."/>
+      </svg>
       Подписаться в Telegram
     </a>
   </footer>
@@ -112,6 +144,7 @@
     let wrappers = [];
     let total = 0;
 
+    // Загружаем ссылки и рисуем картинки
     async function fetchImages() {
       const params = new URLSearchParams(location.search);
       const src = params.get('url');
@@ -120,33 +153,33 @@
       container.innerHTML = '';
 
       try {
-        const r = await fetch(api);
-        if (!r.ok) throw new Error(r.status);
-        const data = await r.json();
+        const res = await fetch(api);
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
         if (!data.length) {
           container.innerHTML = '<div class="error">Нет изображений</div>';
           return;
         }
         total = data.length;
-        data.forEach(({image_url}) => {
+        for (let {image_url} of data) {
           const w = document.createElement('div');
           w.className = 'image-wrapper';
-          const s = document.createElement('div');
-          s.className = 'spinner';
+          const spinner = document.createElement('div');
+          spinner.className = 'spinner';
           const img = document.createElement('img');
-          w.appendChild(s);
-          w.appendChild(img);
-          container.appendChild(w);
-          loadWithSpinner(img, s, image_url);
-        });
+          w.append(spinner, img);
+          container.append(w);
+          await loadWithSpinner(img, spinner, image_url);
+        }
         wrappers = Array.from(document.querySelectorAll('.image-wrapper'));
       } catch (e) {
         container.innerHTML = `<div class="error">Ошибка: ${e.message}</div>`;
       }
     }
 
-    async function loadWithSpinner(img, spinner, url, tries=3) {
-      for (let i=1; i<=tries; i++) {
+    // Загрузка с повторными попытками и спиннером
+    async function loadWithSpinner(img, spinner, url, tries = 3) {
+      for (let i = 1; i <= tries; i++) {
         try {
           await loadImage(url, 6000);
           img.src = url;
@@ -156,46 +189,44 @@
           };
           return;
         } catch {
-          if (i===tries) {
+          if (i === tries) {
             spinner.remove();
-            const e = document.createElement('div');
-            e.className='error';
-            e.textContent='Не удалось загрузить';
-            img.parentNode.appendChild(e);
+            const err = document.createElement('div');
+            err.className = 'error';
+            err.textContent = 'Не удалось загрузить';
+            img.parentNode.append(err);
           }
-          await new Promise(r=>setTimeout(r,500));
+          await new Promise(r => setTimeout(r, 500));
         }
       }
     }
 
-    function loadImage(src, timeout=5000) {
+    // Промис-обёртка для Image загрузки с timeout
+    function loadImage(src, timeout = 5000) {
       return new Promise((res, rej) => {
         const img = new Image();
         let done = false;
-        const t = setTimeout(() => { if (!done) { done=true; rej(); } }, timeout);
-        img.onload  = () => { if (!done) { done=true; clearTimeout(t); res(); } };
-        img.onerror = () => { if (!done) { done=true; clearTimeout(t); rej(); } };
+        const t = setTimeout(() => { if (!done) { done = true; rej(); } }, timeout);
+        img.onload = () => { if (!done) { done = true; clearTimeout(t); res(); } };
+        img.onerror = () => { if (!done) { done = true; clearTimeout(t); rej(); } };
         img.src = src;
       });
     }
 
+    // Обработка кликов/тапов
     document.addEventListener('click', e => {
-      // e.detail===0 — это скролл/drag, игнорируем
-      if (e.detail === 0) return;
-
-      const y = e.clientY;
-      const h = window.innerHeight;
-      const topZone = h/3, botZone = 2*h/3;
-
-      if (y < topZone) {
-        window.scrollBy({ top: -h*0.8, behavior: 'smooth' });
-      } else if (y > botZone) {
-        window.scrollBy({ top: h*0.8, behavior: 'smooth' });
+      if (e.detail === 0) return;  // пропускаем drag/scroll
+      const y = e.clientY, h = window.innerHeight;
+      if (y < h / 3) {
+        window.scrollBy({ top: -h * 0.8, behavior: 'smooth' });
+      } else if (y > h * 2 / 3) {
+        window.scrollBy({ top: h * 0.8, behavior: 'smooth' });
       } else {
         showPageIndicator();
       }
     });
 
+    // Показать текущую страницу
     function showPageIndicator() {
       const ind = document.getElementById('page-indicator');
       const idx = currentIndex();
@@ -205,6 +236,7 @@
       ind.hideTimeout = setTimeout(() => ind.style.opacity = 0, 1500);
     }
 
+    // Определить, какая картинка по центру экрана
     function currentIndex() {
       const mid = window.innerHeight / 2;
       for (let i = 0; i < wrappers.length; i++) {
@@ -216,9 +248,19 @@
       return wrappers[0].getBoundingClientRect().top > mid ? 1 : wrappers.length;
     }
 
+    // Обновление прогресс-бара при прокрутке
+    window.addEventListener('scroll', () => {
+      const prog = document.getElementById('scroll-progress');
+      const scrollTop = window.scrollY;
+      const docHeight = document.body.scrollHeight - window.innerHeight;
+      const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      prog.style.width = pct + '%';
+    });
+
+    // Запуск
     fetchImages();
   </script>
-  </script>
+
   <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M7R29TFD"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
