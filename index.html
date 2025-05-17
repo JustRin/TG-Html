@@ -3,15 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <title>SCManga Viewer</title>
-  <!-- включаем поддержку safe-area и корректируем масштаб -->
+  <!-- делаем viewport-fit=cover для safe-area и фиксируем масштаб -->
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <style>
-    /* корневая переменная для vh-хака */
-    :root {
-      --vh: 1vh;
-    }
+    /* vh-хак: в JS будем обновлять --vh = 1% высоты окна */
+    :root { --vh: 1vh; }
 
-    /* общий сброс */
+    /* сброс */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       height: 100%;
@@ -27,7 +25,7 @@
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
       overscroll-behavior: contain;
-      /* учёт «домика» iPhone */
+      /* дополнительный отступ под «домик» iPhone */
       padding-bottom: env(safe-area-inset-bottom);
     }
 
@@ -56,7 +54,7 @@
       will-change: transform;
     }
 
-    /* галерея */
+    /* контейнер с картинками */
     #image-container {
       display: flex;
       flex-direction: column;
@@ -99,10 +97,10 @@
       text-align: center;
     }
 
-    /* индикатор страницы */
+    /* фиксированный индикатор страниц */
     #page-indicator {
       position: fixed;
-      bottom: calc(80px + env(safe-area-inset-bottom));
+      bottom: calc(20px + env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
       background: rgba(0,0,0,0.6);
@@ -117,7 +115,7 @@
       will-change: opacity;
     }
 
-    /* футер */
+    /* футер с кнопкой */
     footer {
       margin-top: 16px;
       padding: 20px 0;
@@ -125,8 +123,6 @@
       text-align: center;
       box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
     }
-
-    /* очень красивая кнопка */
     .tg-button {
       position: relative;
       display: inline-flex;
@@ -152,9 +148,7 @@
       transform: rotate(45deg) translate(-100%,0);
       transition: transform .7s ease;
     }
-    .tg-button:hover::before {
-      transform: rotate(45deg) translate(100%,0);
-    }
+    .tg-button:hover::before { transform: rotate(45deg) translate(100%,0); }
     .tg-button:hover {
       transform: translateY(-3px);
       box-shadow: 0 8px 20px rgba(0,0,0,0.2);
@@ -172,30 +166,36 @@
   </style>
 </head>
 <body>
+
+  <!-- кастомный скролл-трек -->
   <div id="scroll-track"><div class="thumb"></div></div>
 
+  <!-- скроллируемая зона -->
   <div id="scrollable">
     <div id="image-container"></div>
     <footer>
       <a href="https://t.me/SCManga" target="_blank" class="tg-button">
-        <!-- SVG Telegram-иконки -->
         <svg viewBox="0 0 256 256">
-          <!-- ... -->
+          <!-- SVG-путь Telegram-лого -->
+          <g xmlns="http://www.w3.org/2000/svg">
+            <!-- ... -->
+          </g>
         </svg>
         Подпишись на нас в Телеграм,<br>будь в курсе последних глав!
       </a>
     </footer>
   </div>
 
+  <!-- Фиксированный индикатор страницы -->
   <div id="page-indicator"></div>
 
   <script>
-    // блокируем меню на картинках
+    // Блокировка меню на картинках
     document.addEventListener('contextmenu', e => {
       if (e.target.tagName === 'IMG') e.preventDefault();
     });
 
-    // Телеграм-заглушка
+    // Заглушка Telegram.WebApp
     if (!window.Telegram) {
       window.Telegram = { WebApp: { ready: ()=>{}, disableVerticalSwipes: ()=>{} } };
     }
@@ -205,10 +205,9 @@
     const thumb      = track.querySelector('.thumb');
     const pageInd    = document.getElementById('page-indicator');
     let wrappers = [], total = 0;
-    let trackHide, indicatorHide;
-    let ticking = false;
+    let trackHide, indicatorHide, ticking = false;
 
-    // vh-хак: на resize пересчитываем высоту
+    // vh-хак: обновляем переменную при изменении размера окна
     function updateVh() {
       document.documentElement.style.setProperty(
         '--vh',
@@ -224,7 +223,7 @@
       fetchImages();
     });
 
-    // оптимизированный скролл-хендлер
+    // Оптимизированный скролл-хендлер через requestAnimationFrame
     scrollable.addEventListener('scroll', () => {
       if (!ticking) {
         requestAnimationFrame(() => {
@@ -253,8 +252,9 @@
       thumb.style.transform = `translateY(${top}px)`;
     }
 
+    // Drag & drop для ползунка
     ;(function(){
-      let dragging = false, startY = 0, startScroll = 0;
+      let dragging=false, startY=0, startScroll=0;
       thumb.addEventListener('pointerdown', e => {
         dragging = true;
         startY = e.clientY;
@@ -274,12 +274,12 @@
         scrollable.scrollTop = Math.min(Math.max(startScroll + delta, 0), maxScroll);
       });
       document.addEventListener('pointerup', () => {
-        if (!dragging) return;
         dragging = false;
         document.body.style.userSelect = '';
       });
     })();
 
+    // Загрузка картинок
     async function fetchImages() {
       const src = new URLSearchParams(location.search).get('url');
       const api = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(src)}`;
@@ -304,6 +304,7 @@
       }
     }
 
+    // Помощник для загрузки с показом спиннера
     async function loadWithSpinner(img, spinner, url, tries = 3) {
       for (let i = 1; i <= tries; i++) {
         try {
@@ -331,6 +332,7 @@
       }
     }
 
+    // Клики: навигация и индикатор
     document.addEventListener('click', e => {
       if (e.detail === 0) return;
       const rect = scrollable.getBoundingClientRect();
