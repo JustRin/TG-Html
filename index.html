@@ -14,10 +14,10 @@
       font-family: sans-serif;
     }
 
-    /* скроллируемая область, верх до надписи, низ до футера */
+    /* скроллируемая область на весь экран */
     #scrollable {
       position: absolute;
-      top: 0; left: 0; right: 0; bottom: 60px;   /* оставляем 60px под футер */
+      top: 0; left: 0; right: 0; bottom: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
@@ -26,18 +26,16 @@
 
     /* кастомный трек */
     #scroll-track {
-      position: fixed;
-      top: 0; right: 2px;
+      position: fixed; top: 0; right: 2px;
       width: 8px; height: 100%;
       background: rgba(0,0,0,0.05);
       pointer-events: none;
       opacity: 0;
-      transition: opacity .4s;
+      transition: opacity .4s ease-in-out;
       z-index: 999;
     }
     #scroll-track .thumb {
-      position: absolute; left: 0;
-      width: 100%;
+      position: absolute; left: 0; width: 100%;
       background: linear-gradient(to bottom,#ff6bd3,#553cff,#34d0ff);
       border-radius: 4px;
       pointer-events: auto;
@@ -56,10 +54,8 @@
       width: 100%;
     }
     .image-wrapper img {
-      width: 100%;
-      opacity: 0;
-      display: block;
-      transition: opacity .4s;
+      width: 100%; opacity: 0; display: block;
+      transition: opacity .4s ease-in;
       -webkit-touch-callout: none;
       user-select: none;
       -webkit-user-drag: none;
@@ -75,7 +71,7 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    @keyframes spin { to{ transform: rotate(360deg); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     /* ошибка */
     .error {
@@ -91,7 +87,7 @@
 
     /* индикатор страницы */
     #page-indicator {
-      position: fixed; bottom: 70px; left: 50%;
+      position: fixed; bottom: 80px; left: 50%;
       transform: translateX(-50%);
       background: rgba(0,0,0,0.6);
       color: #fff;
@@ -99,38 +95,28 @@
       border-radius: 12px;
       font-size: 14px;
       opacity: 0;
-      transition: opacity .3s;
+      transition: opacity .3s ease-in-out;
       pointer-events: none;
       z-index: 1000;
     }
 
-    /* фиксированный футер */
+    /* футер появляется после последнего изображения */
     footer {
-      position: fixed;
-      left: 0; bottom: 0;
-      width: 100%; height: 60px;
+      margin-top: 16px;
+      padding: 12px;
       background: #fff;
       text-align: center;
       box-shadow: 0 -1px 4px rgba(0,0,0,0.1);
-      z-index: 1000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
     }
     .tg-button {
-      display: inline-flex;
-      align-items: center;
-      background: #0088cc;
-      color: #fff;
-      text-decoration: none;
-      padding: 10px 18px;
-      border-radius: 20px;
-      font-size: 14px;
+      display: inline-flex; align-items: center;
+      background: #0088cc; color: #fff;
+      text-decoration: none; padding: 10px 18px;
+      border-radius: 20px; font-size: 14px;
       transition: background .3s, transform .2s;
     }
     .tg-button:hover {
-      background: #0077b3;
-      transform: translateY(-1px);
+      background: #0077b3; transform: translateY(-1px);
     }
     .tg-button svg {
       width: 18px; height: 18px; margin-right: 6px; fill: #fff;
@@ -145,30 +131,29 @@
   <!-- скроллируемая область -->
   <div id="scrollable">
     <div id="image-container"></div>
+    <!-- футер теперь в потоке -->
+    <footer>
+      <a href="https://t.me/SCManga" target="_blank" class="tg-button">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 ..."/>
+        </svg>
+        Подписаться в Telegram
+      </a>
+    </footer>
   </div>
 
-  <!-- индикатор страниц -->
+  <!-- индикатор страницы -->
   <div id="page-indicator"></div>
 
-  <!-- футер с кнопкой -->
-  <footer>
-    <a href="https://t.me/SCManga" target="_blank" class="tg-button">
-      <svg viewBox="0 0 24 24">
-        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zM..."/>
-      </svg>
-      Подписаться в Telegram
-    </a>
-  </footer>
-
   <script>
-    // блокируем нативное меню на img
+    // блокируем меню на картинках
     document.addEventListener('contextmenu', e => {
       if (e.target.tagName === 'IMG') e.preventDefault();
     });
 
     // Telegram WebApp-заглушка
     if (!window.Telegram) {
-      window.Telegram = { WebApp: { ready:()=>{}, disableVerticalSwipes:()=>{} } };
+      window.Telegram = { WebApp: { ready: ()=>{}, disableVerticalSwipes: ()=>{} } };
     }
 
     const scrollable = document.getElementById('scrollable');
@@ -235,7 +220,7 @@
       });
     })();
 
-    // загрузка картинок
+    // загрузка и отрисовка
     async function fetchImages() {
       const src = new URLSearchParams(location.search).get('url');
       const api = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(src)}`;
@@ -260,7 +245,7 @@
       }
     }
 
-    // загрузка через blob → ObjectURL
+    // blob → ObjectURL
     async function loadWithSpinner(img, spinner, url, tries = 3) {
       for (let i = 1; i <= tries; i++) {
         try {
@@ -288,7 +273,7 @@
       }
     }
 
-    // навигация кликами и индикатор
+    // клики для навигации и индикатора
     document.addEventListener('click', e => {
       if (e.detail === 0) return;
       const rect = scrollable.getBoundingClientRect();
