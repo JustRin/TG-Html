@@ -18,15 +18,19 @@
       top: 0;
       left: 0;
       width: 0%;
-      height: 4px;
-      background: linear-gradient(90deg, #4a90e2, #50c7f2);
+      height: 6px;                              /* чуть толще для видимости */
+      background: #4a90e2;                     /* сплошной яркий синий */
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);    /* лёгкая тень */
       z-index: 9999;
-      transition: width 0.1s ease-out;
+      opacity: 0;                               /* скрыт по умолчанию */
+      transition: width 0.1s ease-out,
+                  opacity 0.4s ease-in-out;
+      pointer-events: none;
     }
 
-    /* Контейнер изображений */
+    /* Галерея картинок */
     #image-container {
-      margin-top: 4px; /* отступ под прогресс-бар */
+      margin-top: 6px;  /* чтобы прогресс-бар не перекрывал */
       display: flex;
       flex-direction: column;
     }
@@ -44,17 +48,17 @@
     /* Спиннер */
     .spinner {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 40px;
-      height: 40px;
+      top: 50%; left: 50%;
+      width: 40px; height: 40px;
       margin: -20px 0 0 -20px;
       border: 4px solid rgba(0,0,0,0.1);
       border-top-color: #4a90e2;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
 
     /* Ошибка при загрузке */
     .error {
@@ -66,9 +70,10 @@
       padding: 4px 8px;
       border-radius: 4px;
       font-size: 14px;
+      text-align: center;
     }
 
-    /* Индикатор страницы (число) */
+    /* Индикатор номера страницы */
     #page-indicator {
       position: fixed;
       bottom: 20px;
@@ -84,7 +89,7 @@
       pointer-events: none;
     }
 
-    /* Подвал с кнопкой Telegram */
+    /* Футер с кнопкой Telegram */
     footer {
       text-align: center;
       padding: 12px;
@@ -111,7 +116,7 @@
       fill: white;
     }
   </style>
-  <!-- Google Tag Manager -->
+    <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
     new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
     j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
@@ -127,38 +132,36 @@
   <!-- Галерея -->
   <div id="image-container"></div>
 
-  <!-- Индикатор страницы -->
+  <!-- Индикатор текущей страницы -->
   <div id="page-indicator"></div>
 
   <!-- Футер -->
   <footer>
     <a href="https://t.me/SCManga" target="_blank" class="tg-button">
       <svg viewBox="0 0 24 24">
-        <path d="M12 0C5.373 0 0 5.373 0 12 ..."/>
+        <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 ..."/>
       </svg>
       Подписаться в Telegram
     </a>
   </footer>
 
   <script>
-    let wrappers = [];
-    let total = 0;
+    let wrappers = [], total = 0;
+    let progressHideTimeout, indicatorHideTimeout;
 
-    // Загружаем ссылки и рисуем картинки
+    // Загрузка ссылок и рендеринг
     async function fetchImages() {
-      const params = new URLSearchParams(location.search);
-      const src = params.get('url');
+      const src = new URLSearchParams(location.search).get('url');
       const api = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(src)}`;
       const container = document.getElementById('image-container');
       container.innerHTML = '';
 
       try {
         const res = await fetch(api);
-        if (!res.ok) throw new Error(res.status);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!data.length) {
-          container.innerHTML = '<div class="error">Нет изображений</div>';
-          return;
+          return container.innerHTML = '<div class="error">Нет изображений</div>';
         }
         total = data.length;
         for (let {image_url} of data) {
@@ -177,7 +180,7 @@
       }
     }
 
-    // Загрузка с повторными попытками и спиннером
+    // Загрузка картинки с ретраями
     async function loadWithSpinner(img, spinner, url, tries = 3) {
       for (let i = 1; i <= tries; i++) {
         try {
@@ -201,39 +204,64 @@
       }
     }
 
-    // Промис-обёртка для Image загрузки с timeout
+    // Промис на загрузку картинки с timeout
     function loadImage(src, timeout = 5000) {
       return new Promise((res, rej) => {
-        const img = new Image();
-        let done = false;
-        const t = setTimeout(() => { if (!done) { done = true; rej(); } }, timeout);
-        img.onload = () => { if (!done) { done = true; clearTimeout(t); res(); } };
-        img.onerror = () => { if (!done) { done = true; clearTimeout(t); rej(); } };
+        const img = new Image(), start = Date.now();
+        const timer = setTimeout(() => rej(), timeout);
+        img.onload = () => { clearTimeout(timer); res(); };
+        img.onerror = () => { clearTimeout(timer); rej(); };
         img.src = src;
       });
     }
 
-    // Обработка кликов/тапов
+    // При скролле – обновляем прогресс-бар и показываем его
+    window.addEventListener('scroll', () => {
+      updateProgressBar();
+      showProgressBar();
+    });
+
+    // Обновить ширину прогресса
+    function updateProgressBar() {
+      const prog = document.getElementById('scroll-progress');
+      const scrollTop = window.scrollY;
+      const docHeight = document.body.scrollHeight - window.innerHeight;
+      const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+      prog.style.width = pct + '%';
+    }
+
+    // Плавно показать, затем скрыть
+    function showProgressBar() {
+      const prog = document.getElementById('scroll-progress');
+      prog.style.opacity = 1;
+      clearTimeout(progressHideTimeout);
+      progressHideTimeout = setTimeout(() => {
+        prog.style.opacity = 0;
+      }, 800);
+    }
+
+    // Обработчик кликов для навигации и показа номера страницы
     document.addEventListener('click', e => {
-      if (e.detail === 0) return;  // пропускаем drag/scroll
+      if (e.detail === 0) return;  // игнорируем drag/scroll
       const y = e.clientY, h = window.innerHeight;
       if (y < h / 3) {
-        window.scrollBy({ top: -h * 0.8, behavior: 'smooth' });
-      } else if (y > h * 2 / 3) {
-        window.scrollBy({ top: h * 0.8, behavior: 'smooth' });
+        window.scrollBy({ top: -h*0.8, behavior: 'smooth' });
+      } else if (y > h*2/3) {
+        window.scrollBy({ top: h*0.8, behavior: 'smooth' });
       } else {
         showPageIndicator();
       }
     });
 
-    // Показать текущую страницу
+    // Показать и потом скрыть индикатор номера страницы
     function showPageIndicator() {
       const ind = document.getElementById('page-indicator');
-      const idx = currentIndex();
-      ind.textContent = `${idx}/${total}`;
+      ind.textContent = `${currentIndex()}/${total}`;
       ind.style.opacity = 1;
-      clearTimeout(ind.hideTimeout);
-      ind.hideTimeout = setTimeout(() => ind.style.opacity = 0, 1500);
+      clearTimeout(indicatorHideTimeout);
+      indicatorHideTimeout = setTimeout(() => {
+        ind.style.opacity = 0;
+      }, 1200);
     }
 
     // Определить, какая картинка по центру экрана
@@ -245,23 +273,13 @@
           return i + 1;
         }
       }
-      return wrappers[0].getBoundingClientRect().top > mid ? 1 : wrappers.length;
+      return 1;
     }
 
-    // Обновление прогресс-бара при прокрутке
-    window.addEventListener('scroll', () => {
-      const prog = document.getElementById('scroll-progress');
-      const scrollTop = window.scrollY;
-      const docHeight = document.body.scrollHeight - window.innerHeight;
-      const pct = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
-      prog.style.width = pct + '%';
-    });
-
-    // Запуск
+    // Запускаем
     fetchImages();
   </script>
-
-  <!-- Google Tag Manager (noscript) -->
+<!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M7R29TFD"
     height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
@@ -274,6 +292,6 @@
 
   gtag('config', 'G-TVWL57RTT6');
 </script>
-
 </body>
 </html>
+
