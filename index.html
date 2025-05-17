@@ -226,18 +226,28 @@
       }
       return 1;
     }
+    // Заглушка для разработки в браузере
+    if (!window.Telegram) {
+      window.Telegram = {
+        WebApp: {
+          ready: () => console.log('WebApp.ready() заглушка'),
+          disableVerticalSwipes: () => console.log('disableVerticalSwipes() заглушка')
+        }
+      };
+    }
 
-    fetchImages();
+    document.addEventListener('DOMContentLoaded', () => {
+      // Если запущено из Telegram — инициируем WebApp API
+      if (Telegram.WebApp) {
+        Telegram.WebApp.ready();
+        Telegram.WebApp.disableVerticalSwipes();
+      }
+
+      // Остальной ваш код — загрузка картинок, обработчики кликов и т.д.
+      fetchImages();
+    });
   </script>
-  <script>
-  document.addEventListener('DOMContentLoaded', () => {
-  if (window.Telegram && Telegram.WebApp) {
-    Telegram.WebApp.ready();
-    Telegram.WebApp.disableVerticalSwipes();
-  }
-  fetchImages();
-});
-  </script>
+
 
 
 </body>
