@@ -3,188 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <title>SCManga Viewer</title>
-  <!-- делаем viewport-fit=cover для safe-area и фиксируем масштаб -->
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-	<!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-M7R29TFD');</script>
-    <!-- End Google Tag Manager -->
+
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+  new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  })(window,document,'script','dataLayer','GTM-M7R29TFD');</script>
+  <!-- End Google Tag Manager -->
+
   <style>
-    /* vh-хак: в JS будем обновлять --vh = 1% высоты окна */
     :root { --vh: 1vh; }
-
-    /* сброс */
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      height: 100%;
-      overflow: hidden;
-      background: #f0f2f5;
-      font-family: sans-serif;
-    }
+    html, body { height: 100%; overflow: hidden; background: #f0f2f5; font-family: sans-serif; }
 
-    /* скроллируемая область */
     #scrollable {
       height: calc(var(--vh) * 100);
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       touch-action: pan-y;
       overscroll-behavior: contain;
-      /* дополнительный отступ под «домик» iPhone */
       padding-bottom: env(safe-area-inset-bottom);
-      /* ↓ прячем родной скроллбар Safari/iOS и прочих */
-      scrollbar-width: none;
-      -ms-overflow-style: none;
+      scrollbar-width: none; -ms-overflow-style: none;
       width: calc(100% + 20px);
       margin-right: -20px;
       padding-right: 20px;
     }
+    #scrollable::-webkit-scrollbar { width: 0; height: 0; }
 
-	#scrollable::-webkit-scrollbar {
-	  width: 0;
-	  height: 0;
-	}
-
-    /* кастомный скролл-трек */
     #scroll-track {
-      position: fixed;
-      top: 0;
-      right: calc(2px + env(safe-area-inset-right));
-      width: 8px;
-      height: 100%;
+      position: fixed; top: 0; right: calc(2px + env(safe-area-inset-right));
+      width: 8px; height: 100%;
       background: rgba(0,0,0,0.05);
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity .4s ease;
-      z-index: 999;
-      will-change: opacity;
+      pointer-events: none; opacity: 0; transition: opacity .4s ease;
+      z-index: 999; will-change: opacity;
     }
     #scroll-track .thumb {
-      position: absolute;
-      left: 0; width: 100%;
+      position: absolute; left: 0; width: 100%;
       background: linear-gradient(to bottom, #ff6bd3, #553cff, #34d0ff);
-      border-radius: 4px;
-      pointer-events: auto;
-      touch-action: none;
-      cursor: ns-resize;
-      will-change: transform;
+      border-radius: 4px; pointer-events: auto; touch-action: none; cursor: ns-resize; will-change: transform;
     }
 
-    /* контейнер с картинками */
-    #image-container {
-      display: flex;
-      flex-direction: column;
-    }
-    .image-wrapper {
-      position: relative;
-      width: 100%;
-    }
+    #image-container { display: flex; flex-direction: column; }
+    .image-wrapper { position: relative; width: 100%; }
     .image-wrapper img {
-      width: 100%;
-      opacity: 0;
-      display: block;
-      transition: opacity .4s ease-in;
-      -webkit-touch-callout: none;
-      user-select: none;
-      -webkit-user-drag: none;
+      width: 100%; opacity: 0; display: block; transition: opacity .4s ease-in;
+      -webkit-touch-callout: none; user-select: none; -webkit-user-drag: none;
     }
 
-    /* спиннер */
     .spinner {
       position: absolute; top: 50%; left: 50%;
-      width: 40px; height: 40px;
-      margin: -20px 0 0 -20px;
-      border: 4px solid rgba(0,0,0,0.1);
-      border-top-color: #4a90e2;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+      width: 40px; height: 40px; margin: -20px 0 0 -20px;
+      border: 4px solid rgba(0,0,0,0.1); border-top-color: #4a90e2;
+      border-radius: 50%; animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ошибка */
     .error {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%,-50%);
-      background: rgba(255,255,255,0.9);
-      color: #c00;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 14px;
-      text-align: center;
+      position: relative; margin: 16px auto; background: #fff; color: #c00;
+      padding: 10px 12px; border-radius: 8px; font-size: 14px; text-align: center;
+      max-width: 560px; box-shadow: 0 2px 8px rgba(0,0,0,.06);
     }
 
-    /* фиксированный индикатор страниц */
     #page-indicator {
-      position: fixed;
-      bottom: calc(20px + env(safe-area-inset-bottom));
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.6);
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 12px;
-      font-size: 14px;
-      opacity: 0;
-      transition: opacity .3s ease-in-out;
-      pointer-events: none;
-      z-index: 1000;
-      will-change: opacity;
+      position: fixed; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%;
+      transform: translateX(-50%); background: rgba(0,0,0,0.6); color: #fff;
+      padding: 6px 12px; border-radius: 12px; font-size: 14px; opacity: 0;
+      transition: opacity .3s ease-in-out; pointer-events: none; z-index: 1000; will-change: opacity;
     }
 
-    /* футер с кнопкой */
     footer {
-      margin-top: 16px;
-      padding: 20px 0;
-      background: #fff;
-      text-align: center;
+      margin-top: 16px; padding: 20px 0; background: #fff; text-align: center;
       box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
     }
     .tg-button {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      background: linear-gradient(135deg,#37aee2 0%,#1f8ecd 100%);
-      color: #fff;
-      text-decoration: none;
-      padding: 14px 28px;
-      border-radius: 50px;
-      font-size: 16px;
-      font-weight: 600;
-      overflow: hidden;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-      transition: transform .2s ease, box-shadow .2s ease;
+      position: relative; display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg,#37aee2 0%,#1f8ecd 100%); color: #fff; text-decoration: none;
+      padding: 14px 28px; border-radius: 50px; font-size: 16px; font-weight: 600; overflow: hidden;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15); transition: transform .2s ease, box-shadow .2s ease;
     }
     .tg-button::before {
-      content: '';
-      position: absolute;
-      top: -50%; left: -50%;
-      width: 200%; height: 200%;
-      background: rgba(255,255,255,0.15);
-      transform: rotate(45deg) translate(-100%,0);
-      transition: transform .7s ease;
+      content: ''; position: absolute; top: -50%; left: -50%;
+      width: 200%; height: 200%; background: rgba(255,255,255,0.15);
+      transform: rotate(45deg) translate(-100%,0); transition: transform .7s ease;
     }
     .tg-button:hover::before { transform: rotate(45deg) translate(100%,0); }
-    .tg-button:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-    }
-    .tg-button:active {
-      transform: translateY(1px);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-    .tg-button svg {
-      width: 40px;
-      height: 40px;
-      fill: #fff;
-      flex-shrink: 0;
-    }
+    .tg-button:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+    .tg-button:active { transform: translateY(1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    .tg-button svg { width: 40px; height: 40px; fill: #fff; flex-shrink: 0; }
   </style>
 </head>
 <body>
-
   <!-- кастомный скролл-трек -->
   <div id="scroll-track"><div class="thumb"></div></div>
 
@@ -192,22 +102,14 @@
   <div id="scrollable">
     <div id="image-container"></div>
     <footer>
-      <a href="https://t.me/SCManga" target="_blank" class="tg-button">
-        <svg viewBox="0 0 256 256">
-          <g xmlns="http://www.w3.org/2000/svg">
-				<path d="M128,0 C57.307,0 0,57.307 0,128 L0,128 C0,198.693 57.307,256 128,256 L128,256 C198.693,256 256,198.693 256,128 L256,128 C256,57.307 198.693,0 128,0 L128,0 Z" fill="#40B3E0">
-
-</path>
-				<path d="M190.2826,73.6308 L167.4206,188.8978 C167.4206,188.8978 164.2236,196.8918 155.4306,193.0548 L102.6726,152.6068 L83.4886,143.3348 L51.1946,132.4628 C51.1946,132.4628 46.2386,130.7048 45.7586,126.8678 C45.2796,123.0308 51.3546,120.9528 51.3546,120.9528 L179.7306,70.5928 C179.7306,70.5928 190.2826,65.9568 190.2826,73.6308" fill="#FFFFFF">
-
-</path>
-				<path d="M98.6178,187.6035 C98.6178,187.6035 97.0778,187.4595 95.1588,181.3835 C93.2408,175.3085 83.4888,143.3345 83.4888,143.3345 L161.0258,94.0945 C161.0258,94.0945 165.5028,91.3765 165.3428,94.0945 C165.3428,94.0945 166.1418,94.5735 163.7438,96.8115 C161.3458,99.0505 102.8328,151.6475 102.8328,151.6475" fill="#D2E5F1">
-
-</path>
-				<path d="M122.9015,168.1154 L102.0335,187.1414 C102.0335,187.1414 100.4025,188.3794 98.6175,187.6034 L102.6135,152.2624" fill="#B5CFE4">
-
-</path>
-		</g>
+      <a href="https://t.me/SCManga" target="_blank" class="tg-button" rel="noopener">
+        <svg viewBox="0 0 256 256" aria-hidden="true">
+          <g>
+            <path d="M128,0 C57.307,0 0,57.307 0,128 L0,128 C0,198.693 57.307,256 128,256 L128,256 C198.693,256 256,198.693 256,128 L256,128 C256,57.307 198.693,0 128,0 L128,0 Z" fill="#40B3E0"></path>
+            <path d="M190.2826,73.6308 L167.4206,188.8978 C167.4206,188.8978 164.2236,196.8918 155.4306,193.0548 L102.6726,152.6068 L83.4886,143.3348 L51.1946,132.4628 C51.1946,132.4628 46.2386,130.7048 45.7586,126.8678 C45.2796,123.0308 51.3546,120.9528 51.3546,120.9528 L179.7306,70.5928 C179.7306,70.5928 190.2826,65.9568 190.2826,73.6308" fill="#FFFFFF"></path>
+            <path d="M98.6178,187.6035 C98.6178,187.6035 97.0778,187.4595 95.1588,181.3835 C93.2408,175.3085 83.4888,143.3345 83.4888,143.3345 L161.0258,94.0945 C161.0258,94.0945 165.5028,91.3765 165.3428,94.0945 C165.3428,94.0945 166.1418,94.5735 163.7438,96.8115 C161.3458,99.0505 102.8328,151.6475 102.8328,151.6475" fill="#D2E5F1"></path>
+            <path d="M122.9015,168.1154 L102.0335,187.1414 C102.0335,187.1414 100.4025,188.3794 98.6175,187.6034 L102.6135,152.2624" fill="#B5CFE4"></path>
+          </g>
         </svg>
         Подпишись на нас в Телеграм,<br>будь в курсе последних глав!
       </a>
@@ -218,7 +120,7 @@
   <div id="page-indicator"></div>
 
   <script>
-    // Блокировка меню на картинках
+    // Блокируем контекстное меню на IMG
     document.addEventListener('contextmenu', e => {
       if (e.target.tagName === 'IMG') e.preventDefault();
     });
@@ -235,12 +137,9 @@
     let wrappers = [], total = 0;
     let trackHide, indicatorHide, ticking = false;
 
-    // vh-хак: обновляем переменную при изменении размера окна
+    // vh-хак
     function updateVh() {
-      document.documentElement.style.setProperty(
-        '--vh',
-        (window.innerHeight * 0.01) + 'px'
-      );
+      document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
     }
     window.addEventListener('resize', updateVh);
     updateVh();
@@ -251,13 +150,10 @@
       fetchImages();
     });
 
-    // Оптимизированный скролл-хендлер через requestAnimationFrame
+    // Оптимизированный скролл-хендлер
     scrollable.addEventListener('scroll', () => {
       if (!ticking) {
-        requestAnimationFrame(() => {
-          updateThumb();
-          ticking = false;
-        });
+        requestAnimationFrame(() => { updateThumb(); ticking = false; });
         ticking = true;
       }
       track.style.opacity = 1;
@@ -274,9 +170,7 @@
       thumb.style.height = thH + 'px';
       const maxScroll = docH - viewH;
       const maxMove   = trackH - thH;
-      const top = maxScroll > 0
-        ? (scrollable.scrollTop / maxScroll) * maxMove
-        : 0;
+      const top = maxScroll > 0 ? (scrollable.scrollTop / maxScroll) * maxMove : 0;
       thumb.style.transform = `translateY(${top}px)`;
     }
 
@@ -307,15 +201,58 @@
       });
     })();
 
-    // Загрузка картинок
+    // ======= сеть и загрузка =======
+    const API_BASE = 'https://scmanga.online:3000/get-links?'; // при необходимости замените домен/порт
+    const REQ_TIMEOUT_MS = 8000;
+    const MAX_RETRIES = 2;
+
+    function fetchJSONWithTimeout(url, ms) {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), ms);
+      return fetch(url, { signal: ctrl.signal, mode: 'cors' })
+        .finally(() => clearTimeout(t))
+        .then(async r => {
+          if (r.status === 204) return [];
+          if (!r.ok) {
+            let msg = '';
+            try { const j = await r.json(); msg = j && j.error ? j.error : ''; } catch {}
+            throw new Error(msg || `HTTP ${r.status}`);
+          }
+          return r.json();
+        });
+    }
+
+    async function tryWithRetries(url) {
+      let delay = 500;
+      for (let i = 0; i <= MAX_RETRIES; i++) {
+        try { return await fetchJSONWithTimeout(url, REQ_TIMEOUT_MS); }
+        catch (e) {
+          if (i === MAX_RETRIES) throw e;
+          await new Promise(r => setTimeout(r, delay));
+          delay *= 2;
+        }
+      }
+    }
+
     async function fetchImages() {
-      const src = new URLSearchParams(location.search).get('url');
-      const api = `https://scmanga.online:3000/get-links?url=${encodeURIComponent(src)}`;
+      const qs = new URLSearchParams(location.search);
+      const src = qs.get('url');
       const container = document.getElementById('image-container');
       container.innerHTML = '';
+
+      if (!src) {
+        container.innerHTML = `<div class="error">Не передан параметр <code>url</code> в query.</div>`;
+        return;
+      }
+
+      const apiUrl = API_BASE + new URLSearchParams({ url: src }).toString();
+
       try {
-        const res = await fetch(api);
-        const data = await res.json();
+        const data = await tryWithRetries(apiUrl);
+        if (!data || !data.length) {
+          container.innerHTML = `<div class="error">Изображения не найдены.</div>`;
+          return;
+        }
         total = data.length;
         for (let { image_url } of data) {
           const w = document.createElement('div'); w.className = 'image-wrapper';
@@ -328,17 +265,17 @@
         wrappers = Array.from(container.children);
         updateThumb();
       } catch (e) {
-        container.innerHTML = `<div class="error">Ошибка: ${e.message}</div>`;
+        container.innerHTML = `<div class="error">Ошибка загрузки: ${e.message}<br><button id="retry">Повторить</button></div>`;
+        document.getElementById('retry')?.addEventListener('click', fetchImages);
       }
     }
 
-    // Помощник для загрузки с показом спиннера
     async function loadWithSpinner(img, spinner, url, tries = 3) {
       for (let i = 1; i <= tries; i++) {
         try {
-          const response = await fetch(url, { mode: 'cors' });
-          if (!response.ok) throw new Error(`HTTP ${response.status}`);
-          const blob = await response.blob();
+          const resp = await fetch(url, { mode: 'cors' });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const blob = await resp.blob();
           const objectUrl = URL.createObjectURL(blob);
           img.src = objectUrl;
           img.onload = () => {
@@ -360,7 +297,7 @@
       }
     }
 
-    // Клики: навигация и индикатор
+    // клики: навигация и индикатор
     document.addEventListener('click', e => {
       if (e.detail === 0) return;
       const rect = scrollable.getBoundingClientRect();
@@ -387,18 +324,18 @@
       return 1;
     }
   </script>
-	<!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M7R29TFD"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
-    <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-TVWL57RTT6"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
 
-  gtag('config', 'G-TVWL57RTT6');
-</script>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M7R29TFD"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-TVWL57RTT6"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date()); gtag('config', 'G-TVWL57RTT6');
+  </script>
 </body>
 </html>
