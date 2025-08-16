@@ -270,32 +270,29 @@
       }
     }
 
-    async function loadWithSpinner(img, spinner, url, tries = 3) {
-      for (let i = 1; i <= tries; i++) {
-        try {
-          const resp = await fetch(url, { mode: 'cors' });
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          const blob = await resp.blob();
-          const objectUrl = URL.createObjectURL(blob);
-          img.src = objectUrl;
-          img.onload = () => {
-            spinner.remove();
-            img.style.opacity = 1;
-            URL.revokeObjectURL(objectUrl);
-          };
-          return;
-        } catch {
-          if (i === tries) {
-            spinner.remove();
-            const err = document.createElement('div');
-            err.className = 'error';
-            err.textContent = 'Не удалось загрузить';
-            img.parentNode.append(err);
-          }
-          await new Promise(r => setTimeout(r, 500));
-        }
-      }
-    }
+    async function loadWithSpinner(img, spinner, url) {
+    return new Promise((resolve) => {
+      // убираем fetch -> blob. Ставим URL напрямую.
+      img.referrerPolicy = 'no-referrer';   // не отправлять Referer
+      img.decoding = 'async';
+      img.loading = 'lazy';
+      img.onerror = () => {
+        // красиво показываем ошибку
+        spinner.remove();
+        const err = document.createElement('div');
+        err.className = 'error';
+        err.textContent = 'Не удалось загрузить';
+        img.parentNode.append(err);
+        resolve(); // не блокируем последующие
+      };
+      img.onload = () => {
+        spinner.remove();
+        img.style.opacity = 1;
+        resolve();
+      };
+      img.src = url;
+    });
+  }
 
     // клики: навигация и индикатор
     document.addEventListener('click', e => {
