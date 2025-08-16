@@ -95,10 +95,8 @@
   </style>
 </head>
 <body>
-  <!-- кастомный скролл-трек -->
   <div id="scroll-track"><div class="thumb"></div></div>
 
-  <!-- скроллируемая зона -->
   <div id="scrollable">
     <div id="image-container"></div>
     <footer>
@@ -116,216 +114,224 @@
     </footer>
   </div>
 
-  <!-- Фиксированный индикатор страницы -->
   <div id="page-indicator"></div>
 
   <script>
-// ===== Глобальные переменные/элементы =====
-document.addEventListener('contextmenu', e => { if (e.target.tagName === 'IMG') e.preventDefault(); });
-if (!window.Telegram) { window.Telegram = { WebApp: { ready: ()=>{}, disableVerticalSwipes: ()=>{} } }; }
+  // ---- Базовые утилиты/глобалки ----
+  document.addEventListener('contextmenu', e => { if (e.target.tagName === 'IMG') e.preventDefault(); });
+  if (!window.Telegram) { window.Telegram = { WebApp: { ready: ()=>{}, disableVerticalSwipes: ()=>{} } }; }
 
-const scrollable = document.getElementById('scrollable');
-const track      = document.getElementById('scroll-track');
-const thumb      = track.querySelector('.thumb');
-const pageInd    = document.getElementById('page-indicator');
+  const scrollable = document.getElementById('scrollable');
+  const track      = document.getElementById('scroll-track');
+  const thumb      = track.querySelector('.thumb');
+  const pageInd    = document.getElementById('page-indicator');
+  const container  = document.getElementById('image-container');
 
-let wrappers=[], total=0;
+  let wrappers=[], total=0;
+  let _srcArticleUrl = null; // URL главы из ?url=...
 
-// vh фикс
-function updateVh(){ document.documentElement.style.setProperty('--vh',(window.innerHeight*0.01)+'px'); }
-window.addEventListener('resize', updateVh); updateVh();
+  function updateVh(){ document.documentElement.style.setProperty('--vh',(window.innerHeight*0.01)+'px'); }
+  window.addEventListener('resize', updateVh); updateVh();
 
-// ===== Настройки API/загрузки =====
-const API_ORIGINS = [
-  'https://scmanga.online:3000',   // если будет резерв — добавь сюда
-];
-const API_PATH_GET_LINKS = '/get-links';
-const API_PATH_IMG_PROXY = '/img-proxy';
-const ENABLE_PROXY = true;
-const ALWAYS_PROXY_EXTERNAL = true;
-const REQ_TIMEOUT_MS = 10000;
-const MAX_RETRIES_PER_IMG = 2;
+  // ---- Настройки сети/загрузки ----
+  const API_ORIGINS = ['https://scmanga.online:3000']; // добавь резерв сюда при желании
+  const API_PATH_GET_LINKS = '/get-links';
+  const API_PATH_IMG_PROXY = '/img-proxy';
+  const ENABLE_PROXY = true;
+  const ALWAYS_PROXY_EXTERNAL = true;
+  const REQ_TIMEOUT_MS = 10000;
 
-const PRELOAD_AHEAD = 6;
-const PRELOAD_BACK  = 1;
-const MAX_CONCURRENCY = 3;
+  const PRELOAD_AHEAD = 6;
+  const PRELOAD_BACK  = 1;
+  const MAX_CONCURRENCY = 3;
+  const MAX_RETRIES_PER_IMG = 2;
 
-let API_IDX = 0;
-const API_ORIGIN = () => API_ORIGINS[API_IDX];
+  let API_IDX = 0;
+  const API_ORIGIN = () => API_ORIGINS[API_IDX];
 
-// ===== UI: скролл-трек и индикатор =====
-let ticking=false, trackHide, indicatorHide;
-scrollable.addEventListener('scroll', () => {
-  if (!ticking) {
-    requestAnimationFrame(()=>{
-      updateThumb();
-      scheduleAround(currentIndex()-1);
-      ticking=false;
-    });
-    ticking=true;
-  }
-  track.style.opacity = 1;
-  clearTimeout(trackHide);
-  trackHide = setTimeout(()=>track.style.opacity=0, 800);
-});
-
-function updateThumb(){
-  const viewH=scrollable.clientHeight, docH=scrollable.scrollHeight, trackH=track.clientHeight;
-  const ratio=viewH/docH, thH=Math.max(ratio*trackH,20); thumb.style.height=thH+'px';
-  const maxScroll=docH-viewH, maxMove=trackH-thH, top=maxScroll>0?(scrollable.scrollTop/maxScroll)*maxMove:0;
-  thumb.style.transform=`translateY(${top}px)`;
-}
-document.addEventListener('click', e => {
-  if (e.detail===0) return;
-  const rect=scrollable.getBoundingClientRect(), y=e.clientY-rect.top, h=scrollable.clientHeight;
-  if (y<h/3) scrollable.scrollBy({top:-h*0.8,behavior:'smooth'});
-  else if (y>2*h/3) scrollable.scrollBy({top:h*0.8,behavior:'smooth'});
-  else showPageIndicator();
-});
-function showPageIndicator(){ pageInd.textContent=`${currentIndex()}/${total}`; pageInd.style.opacity=1; clearTimeout(indicatorHide); indicatorHide=setTimeout(()=>pageInd.style.opacity=0,1200); }
-function currentIndex(){ const mid=window.innerHeight/2; for(let i=0;i<wrappers.length;i++){ const r=wrappers[i].getBoundingClientRect(); if(r.top<=mid&&r.bottom>=mid) return i+1; } return 1; }
-
-// ===== Сеть/утилиты =====
-function toProxy(u){ return `${API_ORIGIN()}${API_PATH_IMG_PROXY}?u=${encodeURIComponent(u)}`; }
-
-function normalizeUrl(u){
-  try{
-    const x=new URL(u, location.href);
-    const isOur = (x.origin===API_ORIGIN());
-    if (isOur) return u;
-    if (ENABLE_PROXY && (ALWAYS_PROXY_EXTERNAL || x.protocol!=='https:')) return toProxy(u);
-    return u;
-  }catch{ return u; }
-}
-
-function fetchJSONWithTimeout(url, ms) {
-  const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),ms);
-  return fetch(url,{signal:ctrl.signal,mode:'cors'})
-    .finally(()=>clearTimeout(t))
-    .then(async r=>{
-      if(r.status===204)return[];
-      if(!r.ok){
-        let msg=''; try{const j=await r.json(); msg=j?.error||'';}catch{}
-        const err=new Error(msg||`HTTP ${r.status}`);
-        err.status=r.status; throw err;
-      }
-      return r.json();
-    });
-}
-
-// Переключение между узлами + ретраи + PDF-фолбэк
-async function resilientGetLinks(srcUrl, {preferPdf=false}={}){
-  const qs = new URLSearchParams({ url: srcUrl });
-  if (preferPdf) qs.set('prefer_pdf','1');
-  let delay=400;
-
-  for (let hop=0; hop<API_ORIGINS.length; hop++){
-    const base = `${API_ORIGIN()}${API_PATH_GET_LINKS}?${qs.toString()}`;
-    for (let i=0;i<3;i++){
-      try{ return await fetchJSONWithTimeout(base, REQ_TIMEOUT_MS); }
-      catch(e){
-        const isNetwork = (e instanceof TypeError) || (e.name==='AbortError');
-        const isRetryable = isNetwork || (e.status>=500 && e.status<600);
-        if (!isRetryable) throw e;
-        await new Promise(r=>setTimeout(r, delay));
-        delay = Math.min(delay*2, 3000);
-      }
+  // ---- UI: скролл и индикатор ----
+  let ticking=false, trackHide, indicatorHide;
+  scrollable.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(()=>{
+        updateThumb();
+        scheduleAround(currentIndex()-1);
+        ticking=false;
+      });
+      ticking=true;
     }
-    API_IDX = Math.min(API_IDX+1, API_ORIGINS.length-1);
-  }
-  throw new Error('Сервис временно недоступен (все узлы недостижимы).');
-}
-
-// ===== Очередь предзагрузки картинок =====
-const items=[];        // {wrapper,img,spinner,rawUrl,curUrl,state,retries,usedProxy}
-const q=[]; let inflight=0;
-
-function enqueue(i){ const it=items[i]; if(!it||it.state==='loaded'||it.state==='loading') return; if(!q.includes(i)) q.push(i); }
-function processQueue(){ while(inflight<MAX_CONCURRENCY && q.length){ const i=q.shift(); const it=items[i]; if(!it||it.state==='loaded'||it.state==='loading') continue; loadIndex(i);} }
-function scheduleAround(pivot){
-  if(pivot<0)pivot=0;
-  const s=Math.max(0,pivot-PRELOAD_BACK), e=Math.min(items.length-1,pivot+PRELOAD_AHEAD);
-  for(let i=s;i<=e;i++) enqueue(i);
-  processQueue();
-}
-function attachErrorCard(it, i){
-  it.spinner?.remove();
-  if (it.wrapper.querySelector('.error')) return;
-  const err=document.createElement('div'); err.className='error';
-  err.textContent='Не удалось загрузить — нажмите, чтобы повторить';
-  err.style.cursor='pointer';
-  err.onclick=()=>{ err.remove(); it.state='idle'; it.retries=0; it.curUrl=normalizeUrl(it.rawUrl); enqueue(i); processQueue(); };
-  it.wrapper.append(err);
-}
-function cacheBust(u){
-  try{ const x=new URL(u,location.href); x.searchParams.set('_', Date.now().toString(36)); return x.toString(); }
-  catch{ return u+(u.includes('?')?'&':'?')+'_'+Date.now().toString(36); }
-}
-function loadIndex(i){
-  const it=items[i]; if(!it) return;
-  it.state='loading'; inflight++;
-  const img=it.img;
-  img.referrerPolicy='no-referrer'; img.decoding='async'; img.loading='eager';
-
-  const trySet=(url)=>new Promise(res=>{
-    let done=false;
-    img.onload = ()=>{ if(done)return; done=true; it.spinner?.remove(); it.state='loaded'; img.style.opacity=1; inflight--; processQueue(); res(true); };
-    img.onerror= ()=>{ if(done)return; done=true; res(false); };
-    img.src=url;
+    track.style.opacity = 1;
+    clearTimeout(trackHide);
+    trackHide = setTimeout(()=>track.style.opacity=0, 800);
   });
 
-  const tryLoad=async()=>{
-    if (await trySet(it.curUrl)) return true;
-    if (ENABLE_PROXY && !it.usedProxy){ it.usedProxy=true; it.curUrl=toProxy(it.rawUrl); if(await trySet(it.curUrl)) return true; }
-    while(it.retries<MAX_RETRIES_PER_IMG){ it.retries++; const busted=cacheBust(it.curUrl); if(await trySet(busted)) return true; }
-    return false;
-  };
+  function updateThumb(){
+    const viewH=scrollable.clientHeight, docH=scrollable.scrollHeight, trackH=track.clientHeight;
+    const ratio=viewH/docH, thH=Math.max(ratio*trackH,20); thumb.style.height=thH+'px';
+    const maxScroll=docH-viewH, maxMove=trackH-thH, top=maxScroll>0?(scrollable.scrollTop/maxScroll)*maxMove:0;
+    thumb.style.transform=`translateY(${top}px)`;
+  }
+  document.addEventListener('click', e => {
+    if (e.detail===0) return;
+    const rect=scrollable.getBoundingClientRect(), y=e.clientY-rect.top, h=scrollable.clientHeight;
+    if (y<h/3) scrollable.scrollBy({top:-h*0.8,behavior:'smooth'});
+    else if (y>2*h/3) scrollable.scrollBy({top:h*0.8,behavior:'smooth'});
+    else showPageIndicator();
+  });
+  function showPageIndicator(){ pageInd.textContent=`${currentIndex()}/${total}`; pageInd.style.opacity=1; clearTimeout(indicatorHide); indicatorHide=setTimeout(()=>pageInd.style.opacity=0,1200); }
+  function currentIndex(){ const mid=window.innerHeight/2; for(let i=0;i<wrappers.length;i++){ const r=wrappers[i].getBoundingClientRect(); if(r.top<=mid&&r.bottom>=mid) return i+1; } return 1; }
 
-  tryLoad().then(ok=>{ if(!ok){ it.state='error'; inflight--; processQueue(); attachErrorCard(it,i); }});
-}
+  // ---- Сеть ----
+  function toProxy(u, idx){
+    const oneBased = (idx != null) ? (idx + 1) : '';
+    const params = new URLSearchParams({ u });
+    if (_srcArticleUrl) params.set('src', _srcArticleUrl);
+    if (oneBased) params.set('idx', String(oneBased));
+    return `${API_ORIGIN()}${API_PATH_IMG_PROXY}?${params.toString()}`;
+  }
+  function normalizeUrl(u, idx){
+    try{
+      const x=new URL(u, location.href);
+      const isOur = (x.origin===API_ORIGIN());
+      if (isOur) return u;
+      if (ENABLE_PROXY && (ALWAYS_PROXY_EXTERNAL || x.protocol!=='https:')) return toProxy(u, idx);
+      return u;
+    }catch{ return toProxy(u, idx); }
+  }
+  function fetchJSONWithTimeout(url, ms) {
+    const ctrl=new AbortController(); const t=setTimeout(()=>ctrl.abort(),ms);
+    return fetch(url,{signal:ctrl.signal,mode:'cors'})
+      .finally(()=>clearTimeout(t))
+      .then(async r=>{
+        if(r.status===204)return[];
+        if(!r.ok){
+          let msg=''; try{const j=await r.json(); msg=j?.error||'';}catch{}
+          const err=new Error(msg||`HTTP ${r.status}`);
+          err.status=r.status; throw err;
+        }
+        return r.json();
+      });
+  }
+  async function resilientGetLinks(srcUrl, {preferPdf=false}={}){
+    const qs = new URLSearchParams({ url: srcUrl });
+    if (preferPdf) qs.set('prefer_pdf','1');
+    let delay=400;
 
-// ===== Основной запуск =====
-document.addEventListener('DOMContentLoaded', () => {
-  Telegram.WebApp.ready();
-  Telegram.WebApp.disableVerticalSwipes?.();
-  fetchImages();
-});
+    for (let hop=0; hop<API_ORIGINS.length; hop++){
+      const base = `${API_ORIGIN()}${API_PATH_GET_LINKS}?${qs.toString()}`;
+      for (let i=0;i<3;i++){
+        try{ return await fetchJSONWithTimeout(base, REQ_TIMEOUT_MS); }
+        catch(e){
+          const isNetwork = (e instanceof TypeError) || (e.name==='AbortError');
+          const isRetryable = isNetwork || (e.status>=500 && e.status<600);
+          if (!isRetryable) throw e;
+          await new Promise(r=>setTimeout(r, delay));
+          delay = Math.min(delay*2, 3000);
+        }
+      }
+      API_IDX = Math.min(API_IDX+1, API_ORIGINS.length-1);
+    }
+    throw new Error('Сервис временно недоступен (все узлы недостижимы).');
+  }
 
-async function fetchImages(){
-  const src=new URLSearchParams(location.search).get('url');
-  const container=document.getElementById('image-container');
-  container.innerHTML='';
-  if(!src){ container.innerHTML=`<div class="error">Не передан параметр <code>url</code>.</div>`; return; }
+  // ---- Очередь загрузки ----
+  const items=[];            // {wrapper,img,spinner,rawUrl,curUrl,state,retries,usedProxy}
+  const q=[]; let inflight=0;
 
-  try{
-    let data = await resilientGetLinks(src);                    // 1) пробуем <img> с источника
-    if (!data || !data.length) data = await resilientGetLinks(src, {preferPdf:true}); // 2) PDF
+  function enqueue(i){ const it=items[i]; if(!it||it.state==='loaded'||it.state==='loading') return; if(!q.includes(i)) q.push(i); }
+  function processQueue(){ while(inflight<MAX_CONCURRENCY && q.length){ const i=q.shift(); const it=items[i]; if(!it||it.state==='loaded'||it.state==='loading') continue; loadIndex(i);} }
+  function scheduleAround(pivot){
+    if(pivot<0)pivot=0;
+    const s=Math.max(0,pivot-PRELOAD_BACK), e=Math.min(items.length-1,pivot+PRELOAD_AHEAD);
+    for(let i=s;i<=e;i++) enqueue(i);
+    processQueue();
+  }
+  function attachErrorCard(it, i){
+    it.spinner?.remove();
+    if (it.wrapper.querySelector('.error')) return;
+    const err=document.createElement('div'); err.className='error';
+    err.textContent='Не удалось загрузить — нажмите, чтобы повторить';
+    err.style.cursor='pointer';
+    err.onclick=()=>{ err.remove(); it.state='idle'; it.retries=0; it.curUrl=normalizeUrl(it.rawUrl, i); enqueue(i); processQueue(); };
+    it.wrapper.append(err);
+  }
+  function cacheBust(u){
+    try{ const x=new URL(u,location.href); x.searchParams.set('_', Date.now().toString(36)); return x.toString(); }
+    catch{ return u+(u.includes('?')?'&':'?')+'_'+Date.now().toString(36); }
+  }
+  function loadIndex(i){
+    const it=items[i]; if(!it) return;
+    it.state='loading'; inflight++;
+    const img=it.img;
+    img.referrerPolicy='no-referrer'; img.decoding='async'; img.loading='eager';
 
-    if(!data || !data.length){ container.innerHTML=`<div class="error">Изображения не найдены.</div>`; return; }
-
-    data.forEach(({image_url}, idx)=>{
-      const w=document.createElement('div'); w.className='image-wrapper';
-      const s=document.createElement('div'); s.className='spinner';
-      const img=document.createElement('img'); w.append(s,img); container.append(w);
-      items[idx]={ wrapper:w, img, spinner:s, rawUrl:image_url, curUrl:normalizeUrl(image_url), state:'idle', retries:0, usedProxy: ENABLE_PROXY && ALWAYS_PROXY_EXTERNAL };
+    const trySet=(url)=>new Promise(res=>{
+      let done=false;
+      img.onload = ()=>{ if(done)return; done=true; it.spinner?.remove(); it.state='loaded'; img.style.opacity=1; inflight--; processQueue(); res(true); };
+      img.onerror= ()=>{ if(done)return; done=true; res(false); };
+      img.src=url;
     });
 
-    wrappers = items.map(x=>x.wrapper); total=items.length;
-    updateThumb();
-    scheduleAround(0);
-  }catch(e){
-    container.innerHTML = `<div class="error">Ошибка загрузки: ${e.message}<br><button id="retry">Повторить</button></div>`;
-    document.getElementById('retry')?.addEventListener('click', fetchImages);
+    const tryLoad=async()=>{
+      if (await trySet(it.curUrl)) return true;
+      // уже через прокси, но добавим cache-busting пары попыток
+      while(it.retries<MAX_RETRIES_PER_IMG){ it.retries++; const busted=cacheBust(it.curUrl); if(await trySet(busted)) return true; }
+      return false;
+    };
+
+    tryLoad().then(ok=>{ if(!ok){ it.state='error'; inflight--; processQueue(); attachErrorCard(it,i); }});
   }
-}
-</script>
 
+  // ---- Запуск ----
+  document.addEventListener('DOMContentLoaded', () => {
+    Telegram.WebApp.ready();
+    Telegram.WebApp.disableVerticalSwipes?.();
+    fetchImages();
+  });
 
+  async function fetchImages(){
+    const src=new URLSearchParams(location.search).get('url');
+    _srcArticleUrl = src;
+
+    container.innerHTML='';
+    if(!src){ container.innerHTML=`<div class="error">Не передан параметр <code>url</code>.</div>`; return; }
+
+    try{
+      let data = await resilientGetLinks(src);                    // сперва пытаемся <img> с Teletype
+      if (!data || !data.length) data = await resilientGetLinks(src, {preferPdf:true}); // затем PDF
+
+      if(!data || !data.length){ container.innerHTML=`<div class="error">Изображения не найдены.</div>`; return; }
+
+      data.forEach(({image_url}, idx)=>{
+        const w=document.createElement('div'); w.className='image-wrapper';
+        const s=document.createElement('div'); s.className='spinner';
+        const img=document.createElement('img'); w.append(s,img); container.append(w);
+
+        // идём через прокси сразу: /img-proxy?u=...&src=<глава>&idx=<1-based>
+        const proxied = toProxy(image_url, idx);
+
+        items[idx]={
+          wrapper:w, img, spinner:s,
+          rawUrl:image_url,
+          curUrl:proxied,
+          state:'idle', retries:0,
+          usedProxy: true
+        };
+      });
+
+      wrappers = items.map(x=>x.wrapper); total=items.length;
+      updateThumb();
+      scheduleAround(0);
+    }catch(e){
+      container.innerHTML = `<div class="error">Ошибка загрузки: ${e.message}<br><button id="retry">Повторить</button></div>`;
+      document.getElementById('retry')?.addEventListener('click', fetchImages);
+    }
+  }
+  </script>
 
   <!-- Google Tag Manager (noscript) -->
   <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M7R29TFD"
   height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-  <!-- End Google Tag Manager (noscript) -->
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-TVWL57RTT6"></script>
