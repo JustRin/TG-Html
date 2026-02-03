@@ -195,6 +195,8 @@
 
   let wrappers=[], total=0;
   let _srcArticleUrl = null; // URL главы из ?url=...
+  let _scrollSaveKey = null;
+  const SCROLL_TTL_MS = 3 * 24 * 60 * 60 * 1000;
 
   function updateVh(){ document.documentElement.style.setProperty('--vh',(window.innerHeight*0.01)+'px'); }
   window.addEventListener('resize', updateVh); updateVh();
@@ -217,6 +219,30 @@
 
   // ---- UI: скролл и индикатор ----
   let ticking=false, trackHide, indicatorHide;
+  let saveTimer;
+  function saveScrollPos(){
+    if (!_scrollSaveKey) return;
+    const payload = {
+      ts: Date.now(),
+      scrollTop: Math.max(0, Math.round(scrollable.scrollTop)),
+      page: currentIndex(),
+    };
+    try { localStorage.setItem(_scrollSaveKey, JSON.stringify(payload)); } catch {}
+  }
+  function loadScrollState(){
+    if (!_scrollSaveKey) return null;
+    try {
+      const raw = localStorage.getItem(_scrollSaveKey);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || typeof data.ts !== 'number') return null;
+      if ((Date.now() - data.ts) > SCROLL_TTL_MS) {
+        localStorage.removeItem(_scrollSaveKey);
+        return null;
+      }
+      return data;
+    } catch { return null; }
+  }
   scrollable.addEventListener('scroll', () => {
     if (!ticking) {
       requestAnimationFrame(()=>{
@@ -229,6 +255,8 @@
     track.style.opacity = 1;
     clearTimeout(trackHide);
     trackHide = setTimeout(()=>track.style.opacity=0, 800);
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveScrollPos, 200);
   });
 
   function updateThumb(){
@@ -385,6 +413,7 @@
   async function fetchImages(){
     const src=new URLSearchParams(location.search).get('url');
     _srcArticleUrl = src;
+    _scrollSaveKey = src ? `scroll:${src}` : null;
 
     container.innerHTML='';
     loadedCount = 0;
@@ -427,6 +456,23 @@
       if (loaderNote) loaderNote.textContent = `Найдено страниц: ${items.length}. Загружаем…`;
       updateThumb();
       scheduleAround(0);
+      // попытка восстановить позицию скролла после инициализации
+      const state = loadScrollState();
+      const target = state?.scrollTop ? Math.max(0, parseInt(state.scrollTop, 10) || 0) : 0;
+      if (target > 0) {
+        let tries = 0;
+        const tryRestore = () => {
+          tries++;
+          const maxScroll = scrollable.scrollHeight - scrollable.clientHeight;
+          if (maxScroll >= target || tries > 80) {
+            scrollable.scrollTop = Math.min(target, Math.max(0, maxScroll));
+            updateThumb();
+            return;
+          }
+          requestAnimationFrame(tryRestore);
+        };
+        requestAnimationFrame(tryRestore);
+      }
     }catch(e){
       container.innerHTML = `<div class="error">Ошибка загрузки: ${e.message}<br><button id="retry">Повторить</button></div>`;
       hidePageLoader();
