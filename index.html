@@ -92,9 +92,61 @@
     .tg-button:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
     .tg-button:active { transform: translateY(1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     .tg-button svg { width: 40px; height: 40px; fill: #fff; flex-shrink: 0; }
+
+    /* --------- Page Loader --------- */
+    #page-loader {
+      position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(1200px 600px at 10% -10%, #e7f2ff 0%, #f8fbff 45%, #f2f2f7 100%);
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    #page-loader.hidden { opacity: 0; pointer-events: none; transform: translateY(-10px); }
+    .loader-card {
+      width: min(92vw, 520px); padding: 24px; border-radius: 18px; background: rgba(255,255,255,0.9);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.12); backdrop-filter: blur(6px);
+      border: 1px solid rgba(0,0,0,0.04);
+    }
+    .loader-top { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+    .loader-orb {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: conic-gradient(from 0deg, #ff6bd3, #553cff, #34d0ff, #ff6bd3);
+      animation: orb-spin 1.2s linear infinite;
+      position: relative;
+    }
+    .loader-orb::after {
+      content: ""; position: absolute; inset: 6px; border-radius: 50%;
+      background: white; box-shadow: inset 0 0 8px rgba(0,0,0,0.06);
+    }
+    @keyframes orb-spin { to { transform: rotate(360deg); } }
+    .loader-title { font-weight: 700; font-size: 18px; color: #1f2430; }
+    .loader-sub { font-size: 14px; color: #60697a; margin-top: 4px; }
+    .loader-bar {
+      height: 10px; border-radius: 999px; background: #eef1f7; overflow: hidden; position: relative;
+    }
+    .loader-bar::before {
+      content: ""; position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(85,60,255,0.35) 40%, rgba(52,208,255,0.45) 60%, transparent 100%);
+      animation: shimmer 1.2s ease-in-out infinite;
+      transform: translateX(-100%);
+    }
+    @keyframes shimmer { 50% { transform: translateX(100%); } }
+    .loader-note { margin-top: 10px; font-size: 13px; color: #7b8393; }
   </style>
 </head>
 <body>
+  <div id="page-loader" aria-live="polite" aria-busy="true">
+    <div class="loader-card">
+      <div class="loader-top">
+        <div class="loader-orb" aria-hidden="true"></div>
+        <div>
+          <div class="loader-title">Готовим страницы…</div>
+          <div class="loader-sub">Изображения загружаются, это может занять несколько секунд</div>
+        </div>
+      </div>
+      <div class="loader-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+      <div class="loader-note" id="loader-note">Страница не зависла — просто ждём сеть.</div>
+    </div>
+  </div>
+
   <div id="scroll-track"><div class="thumb"></div></div>
 
   <div id="scrollable">
@@ -126,6 +178,9 @@
   const thumb      = track.querySelector('.thumb');
   const pageInd    = document.getElementById('page-indicator');
   const container  = document.getElementById('image-container');
+  const pageLoader = document.getElementById('page-loader');
+  const loaderNote = document.getElementById('loader-note');
+  const loaderBar  = pageLoader?.querySelector('.loader-bar');
 
   let wrappers=[], total=0;
   let _srcArticleUrl = null; // URL главы из ?url=...
@@ -237,6 +292,21 @@
   // ---- Очередь загрузки ----
   const items=[];            // {wrapper,img,spinner,rawUrl,curUrl,state,retries,usedProxy}
   const q=[]; let inflight=0;
+  let loadedCount = 0;
+  let firstImageShown = false;
+
+  function setLoaderProgress(loaded, total){
+    if (!loaderBar) return;
+    const pct = total ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
+    loaderBar.setAttribute('aria-valuenow', String(pct));
+    loaderBar.style.setProperty('--pct', pct + '%');
+  }
+  function hidePageLoader(){
+    if (!pageLoader || pageLoader.classList.contains('hidden')) return;
+    pageLoader.classList.add('hidden');
+    pageLoader.setAttribute('aria-busy', 'false');
+    setTimeout(()=>pageLoader.remove(), 500);
+  }
 
   function enqueue(i){ const it=items[i]; if(!it||it.state==='loaded'||it.state==='loading') return; if(!q.includes(i)) q.push(i); }
   function processQueue(){ while(inflight<MAX_CONCURRENCY && q.length){ const i=q.shift(); const it=items[i]; if(!it||it.state==='loaded'||it.state==='loading') continue; loadIndex(i);} }
@@ -267,7 +337,16 @@
 
     const trySet=(url)=>new Promise(res=>{
       let done=false;
-      img.onload = ()=>{ if(done)return; done=true; it.spinner?.remove(); it.state='loaded'; img.style.opacity=1; inflight--; processQueue(); res(true); };
+      img.onload = ()=>{
+        if(done)return; done=true;
+        it.spinner?.remove();
+        it.state='loaded';
+        img.style.opacity=1;
+        loadedCount++;
+        if (!firstImageShown) { firstImageShown = true; hidePageLoader(); }
+        setLoaderProgress(loadedCount, items.length);
+        inflight--; processQueue(); res(true);
+      };
       img.onerror= ()=>{ if(done)return; done=true; res(false); };
       img.src=url;
     });
@@ -294,13 +373,24 @@
     _srcArticleUrl = src;
 
     container.innerHTML='';
+    loadedCount = 0;
+    firstImageShown = false;
+    if (pageLoader) {
+      pageLoader.classList.remove('hidden');
+      pageLoader.setAttribute('aria-busy', 'true');
+      setLoaderProgress(0, 0);
+    }
     if(!src){ container.innerHTML=`<div class="error">Не передан параметр <code>url</code>.</div>`; return; }
 
     try{
       let data = await resilientGetLinks(src);                    // сперва пытаемся <img> с Teletype
       if (!data || !data.length) data = await resilientGetLinks(src, {preferPdf:true}); // затем PDF
 
-      if(!data || !data.length){ container.innerHTML=`<div class="error">Изображения не найдены.</div>`; return; }
+      if(!data || !data.length){
+        container.innerHTML=`<div class="error">Изображения не найдены.</div>`;
+        hidePageLoader();
+        return;
+      }
 
       data.forEach(({image_url}, idx)=>{
         const w=document.createElement('div'); w.className='image-wrapper';
@@ -320,10 +410,12 @@
       });
 
       wrappers = items.map(x=>x.wrapper); total=items.length;
+      if (loaderNote) loaderNote.textContent = `Найдено страниц: ${items.length}. Загружаем…`;
       updateThumb();
       scheduleAround(0);
     }catch(e){
       container.innerHTML = `<div class="error">Ошибка загрузки: ${e.message}<br><button id="retry">Повторить</button></div>`;
+      hidePageLoader();
       document.getElementById('retry')?.addEventListener('click', fetchImages);
     }
   }
