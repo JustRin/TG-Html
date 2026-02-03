@@ -46,7 +46,16 @@
     }
 
     #image-container { display: flex; flex-direction: column; }
-    .image-wrapper { position: relative; width: 100%; }
+    .image-wrapper {
+      position: relative; width: 100%;
+      min-height: 60vh;
+      background: linear-gradient(110deg, #f2f4f9 8%, #e9edf5 18%, #f2f4f9 33%);
+      background-size: 200% 100%;
+      animation: skel 1.4s ease-in-out infinite;
+    }
+    .image-wrapper.loaded { min-height: auto; background: transparent; animation: none; }
+    .image-wrapper.error-state { min-height: 60vh; background: #f7f8fb; animation: none; }
+    @keyframes skel { to { background-position-x: -200%; } }
     .image-wrapper img {
       width: 100%; opacity: 0; display: block; transition: opacity .4s ease-in;
       -webkit-touch-callout: none; user-select: none; -webkit-user-drag: none;
@@ -61,9 +70,11 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .error {
-      position: relative; margin: 16px auto; background: #fff; color: #c00;
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      background: #fff; color: #c00;
       padding: 10px 12px; border-radius: 8px; font-size: 14px; text-align: center;
       max-width: 560px; box-shadow: 0 2px 8px rgba(0,0,0,.06);
+      z-index: 2;
     }
 
     #page-indicator {
@@ -319,10 +330,11 @@
   function attachErrorCard(it, i){
     it.spinner?.remove();
     if (it.wrapper.querySelector('.error')) return;
+    it.wrapper.classList.add('error-state');
     const err=document.createElement('div'); err.className='error';
     err.textContent='Не удалось загрузить — нажмите, чтобы повторить';
     err.style.cursor='pointer';
-    err.onclick=()=>{ err.remove(); it.state='idle'; it.retries=0; it.curUrl=normalizeUrl(it.rawUrl, i); enqueue(i); processQueue(); };
+    err.onclick=()=>{ err.remove(); it.wrapper.classList.remove('error-state'); it.state='idle'; it.retries=0; it.curUrl=normalizeUrl(it.rawUrl, i); enqueue(i); processQueue(); };
     it.wrapper.append(err);
   }
   function cacheBust(u){
@@ -341,6 +353,8 @@
         if(done)return; done=true;
         it.spinner?.remove();
         it.state='loaded';
+        it.wrapper.classList.add('loaded');
+        it.wrapper.classList.remove('error-state');
         img.style.opacity=1;
         loadedCount++;
         if (!firstImageShown) { firstImageShown = true; hidePageLoader(); }
