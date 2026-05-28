@@ -34,8 +34,8 @@
 
     /* ====== Кастомный скролл: рельс прогресса + ручка с обводкой + бабл со страницей ====== */
     #scroll-track {
-      position: fixed; top: 14px; right: calc(16px + env(safe-area-inset-right));
-      width: 5px; height: calc(100% - 28px);
+      position: fixed; top: 14px; right: calc(8px + env(safe-area-inset-right));
+      width: 4px; height: calc(100% - 28px);
       background: rgba(28,32,58,0.12);
       border-radius: 999px;
       pointer-events: none; opacity: .45; transition: opacity .3s ease;
@@ -51,34 +51,32 @@
       box-shadow: 0 0 10px rgba(120,80,255,0.5);
     }
 
-    /* Ручка-хваталка: белая с тёмной обводкой — видна и на светлых, и на тёмных страницах */
+    /* Ручка-хваталка: компактный круглый хэндл с фирменным кольцом — виден на любом фоне */
     #scroll-track .thumb {
-      position: absolute; left: 50%; top: 0; width: 20px; height: 26px;
+      position: absolute; left: 50%; top: 0; width: 15px; height: 15px;
       transform: translate(-50%, 0); will-change: transform;
-      border-radius: 9px;
-      background: linear-gradient(180deg, #ffffff 0%, #eef1fb 100%);
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 34%, #ffffff 0%, #eef1fb 75%);
       box-shadow:
-        0 0 0 1.5px rgba(38,42,70,0.55),
-        0 5px 14px rgba(20,22,45,0.32),
-        inset 0 1px 1px rgba(255,255,255,0.95);
+        0 0 0 1.4px rgba(106,75,255,0.9),
+        0 2px 6px rgba(20,22,45,0.30);
       pointer-events: auto; touch-action: none; cursor: grab;
-      transition: box-shadow .18s ease;
+      transition: box-shadow .18s ease, width .15s ease, height .15s ease;
     }
-    /* Невидимая увеличенная зона захвата под палец */
-    #scroll-track .thumb::after { content: ""; position: absolute; inset: -14px -18px; }
-    /* Насечки-грип в центре ручки */
+    /* Невидимая увеличенная зона захвата под палец (хэндл маленький, а тянуть удобно) */
+    #scroll-track .thumb::after { content: ""; position: absolute; inset: -15px -16px; }
+    /* Градиентная точка в центре — перекликается с полосой прогресса */
     #scroll-track .thumb i {
       position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-      width: 9px; height: 2px; border-radius: 2px; background: #9aa0c4;
-      box-shadow: 0 -4px 0 #b9bedb, 0 4px 0 #b9bedb;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: linear-gradient(135deg, #ff7ad9, #6a4bff 55%, #36c9ff);
     }
     #scroll-track.dragging .thumb {
-      cursor: grabbing;
+      cursor: grabbing; width: 17px; height: 17px;
       box-shadow:
-        0 0 0 1.5px rgba(106,75,255,0.9),
+        0 0 0 1.4px rgba(106,75,255,1),
         0 0 0 5px rgba(106,75,255,0.18),
-        0 8px 20px rgba(20,22,45,0.4),
-        inset 0 1px 1px rgba(255,255,255,0.95);
+        0 4px 10px rgba(20,22,45,0.4);
     }
 
     /* Бабл с номером страницы — появляется при перетаскивании. Координаты задаёт JS (position:fixed). */
@@ -246,7 +244,7 @@
   const fill       = track.querySelector('.fill');
   const bubble     = track.querySelector('.bubble');
   const bubbleText = bubble.querySelector('span');
-  const KNOB_H     = 26; // высота ручки (синхронно с CSS)
+  const KNOB_H     = 15; // диаметр ручки (синхронно с CSS)
   const pageInd    = document.getElementById('page-indicator');
   const container  = document.getElementById('image-container');
   const pageLoader = document.getElementById('page-loader');
