@@ -33,24 +33,43 @@
     #scrollable::-webkit-scrollbar { width: 0; height: 0; }
 
     #scroll-track {
-      position: fixed; top: 8px; right: calc(4px + env(safe-area-inset-right));
-      width: 6px; height: calc(100% - 16px);
-      background: rgba(15,23,42,0.06);
+      position: fixed; top: 10px; right: calc(6px + env(safe-area-inset-right));
+      width: 6px; height: calc(100% - 20px);
+      background: rgba(120,130,160,0.20);
       border-radius: 999px;
-      pointer-events: none; opacity: 0; transition: opacity .35s ease;
+      pointer-events: none; opacity: .3; transition: opacity .3s ease;
       z-index: 999; will-change: opacity;
     }
+    #scroll-track.show, #scroll-track.dragging { opacity: 1; }
+
     #scroll-track .thumb {
-      position: absolute; left: -1px; width: 8px; min-height: 28px;
-      background: linear-gradient(180deg, #ff6bd3 0%, #a04bff 45%, #553cff 72%, #34d0ff 100%);
+      position: absolute; left: -5px; width: 16px; min-height: 44px;
       border-radius: 999px;
-      box-shadow: 0 2px 8px rgba(85,60,255,0.35), inset 0 0 0 1px rgba(255,255,255,0.30);
-      pointer-events: auto; touch-action: none; cursor: ns-resize; will-change: transform;
-      transition: width .18s ease, left .18s ease, box-shadow .18s ease;
+      background: linear-gradient(165deg, #ff7ad9 0%, #b15cff 38%, #6a4bff 66%, #36c9ff 100%);
+      box-shadow:
+        0 4px 12px rgba(106,75,255,0.45),
+        inset 0 0 0 1px rgba(255,255,255,0.35),
+        inset 0 1px 1px rgba(255,255,255,0.55);
+      pointer-events: auto; touch-action: none; cursor: grab; will-change: transform;
+      transition: width .2s ease, left .2s ease, box-shadow .2s ease, filter .2s ease;
     }
-    #scroll-track.show .thumb {
-      width: 12px; left: -3px;
-      box-shadow: 0 3px 14px rgba(85,60,255,0.5), inset 0 0 0 1px rgba(255,255,255,0.45);
+    /* объёмный блик сверху бегунка */
+    #scroll-track .thumb::after {
+      content: ""; position: absolute; left: 50%; top: 7px; transform: translateX(-50%);
+      width: 4px; height: 16px; border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0));
+      opacity: .75; pointer-events: none;
+    }
+    /* увеличенная невидимая зона захвата под палец */
+    #scroll-track .thumb::before {
+      content: ""; position: absolute; top: -12px; bottom: -12px; left: -14px; right: -8px;
+    }
+    #scroll-track.dragging .thumb {
+      width: 20px; left: -7px; cursor: grabbing; filter: saturate(1.12);
+      box-shadow:
+        0 6px 20px rgba(106,75,255,0.6),
+        inset 0 0 0 1px rgba(255,255,255,0.5),
+        inset 0 1px 2px rgba(255,255,255,0.7);
     }
 
     #image-container { display: flex; flex-direction: column; }
@@ -226,9 +245,16 @@
   const API_ORIGIN = () => API_ORIGINS[API_IDX];
 
   // ---- UI: скролл и индикатор ----
-  let ticking=false, trackHide, indicatorHide;
+  let ticking=false, trackHide, indicatorHide, dragging=false, grabDY=0;
   let saveTimer;
   let _restoring = false;
+
+  // Показать дорожку скролла; если persist=false — спрятать через паузу (но не во время drag).
+  function showTrack(persist){
+    track.classList.add('show');
+    clearTimeout(trackHide);
+    if (!persist) trackHide = setTimeout(()=>{ if (!dragging) track.classList.remove('show'); }, 1100);
+  }
 
   // Страница, пересекающая верх вьюпорта, и доля её прокрутки (0..1).
   // Привязка к элементу страницы (а не к абсолютному пикселю) переживает
@@ -329,22 +355,52 @@
       });
       ticking=true;
     }
-    track.style.opacity = 1;
-    track.classList.add('show');
-    clearTimeout(trackHide);
-    trackHide = setTimeout(()=>{ track.style.opacity = 0; track.classList.remove('show'); }, 800);
+    if (!dragging) showTrack(false);
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveScrollPos, 200);
   });
 
   function updateThumb(){
     const viewH=scrollable.clientHeight, docH=scrollable.scrollHeight, trackH=track.clientHeight;
-    const ratio=viewH/docH, thH=Math.max(ratio*trackH,28); thumb.style.height=thH+'px';
+    const ratio=viewH/docH, thH=Math.max(ratio*trackH,44); thumb.style.height=thH+'px';
     const maxScroll=docH-viewH, maxMove=trackH-thH, top=maxScroll>0?(scrollable.scrollTop/maxScroll)*maxMove:0;
     thumb.style.transform=`translateY(${top}px)`;
   }
+
+  // ---- Перетаскивание ползунка пальцем/мышью ----
+  thumb.addEventListener('pointerdown', e => {
+    dragging = true;
+    _restoring = false;                 // прерываем авто-восстановление позиции, если оно идёт
+    track.classList.add('dragging');
+    showTrack(true);
+    grabDY = e.clientY - thumb.getBoundingClientRect().top;  // где именно схватили бегунок
+    try { thumb.setPointerCapture(e.pointerId); } catch {}
+    e.preventDefault();
+  });
+  thumb.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const kr = track.getBoundingClientRect();
+    const maxMove = Math.max(0, kr.height - thumb.offsetHeight);
+    let y = e.clientY - kr.top - grabDY;
+    y = Math.max(0, Math.min(maxMove, y));
+    const maxScroll = scrollable.scrollHeight - scrollable.clientHeight;
+    scrollable.scrollTop = maxMove > 0 ? (y / maxMove) * maxScroll : 0;
+    e.preventDefault();
+  });
+  function endDrag(e){
+    if (!dragging) return;
+    dragging = false;
+    track.classList.remove('dragging');
+    showTrack(false);
+    try { thumb.releasePointerCapture(e.pointerId); } catch {}
+    saveScrollPos();
+  }
+  thumb.addEventListener('pointerup', endDrag);
+  thumb.addEventListener('pointercancel', endDrag);
+
   document.addEventListener('click', e => {
     if (e.detail===0) return;
+    if (track.contains(e.target)) return;   // тап по самому ползунку не должен листать страницу
     const rect=scrollable.getBoundingClientRect(), y=e.clientY-rect.top, h=scrollable.clientHeight;
     if (y<h/3) scrollable.scrollBy({top:-h*0.8,behavior:'smooth'});
     else if (y>2*h/3) scrollable.scrollBy({top:h*0.8,behavior:'smooth'});
