@@ -380,7 +380,8 @@
       });
       ticking=true;
     }
-    if (!dragging) showTrack(false);
+    // При обычном скролле НЕ подсвечиваем дорожку (чтобы не мешала) — ручка просто
+    // едет в бледном состоянии. Контраст включаем только по тапу/наведению/захвату.
     clearTimeout(saveTimer);
     saveTimer = setTimeout(saveScrollPos, 200);
   });
@@ -430,6 +431,9 @@
   }
   thumb.addEventListener('pointerup', endDrag);
   thumb.addEventListener('pointercancel', endDrag);
+  // Наведение курсором на ручку — подсветить дорожку (на десктопе)
+  thumb.addEventListener('mouseenter', () => showTrack(true));
+  thumb.addEventListener('mouseleave', () => { if (!dragging) showTrack(false); });
 
   document.addEventListener('click', e => {
     if (e.detail===0) return;
@@ -437,7 +441,7 @@
     const rect=scrollable.getBoundingClientRect(), y=e.clientY-rect.top, h=scrollable.clientHeight;
     if (y<h/3) scrollable.scrollBy({top:-h*0.8,behavior:'smooth'});
     else if (y>2*h/3) scrollable.scrollBy({top:h*0.8,behavior:'smooth'});
-    else showPageIndicator();
+    else { showPageIndicator(); showTrack(false); }   // тап по центру — кратко подсветить дорожку
   });
   function showPageIndicator(){ pageInd.textContent=`${currentIndex()}/${total}`; pageInd.style.opacity=1; clearTimeout(indicatorHide); indicatorHide=setTimeout(()=>pageInd.style.opacity=0,1200); }
   function currentIndex(){ const mid=window.innerHeight/2; for(let i=0;i<wrappers.length;i++){ const r=wrappers[i].getBoundingClientRect(); if(r.top<=mid&&r.bottom>=mid) return i+1; } return 1; }
